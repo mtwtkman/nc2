@@ -75,7 +75,9 @@ fn new_occupied() {
     let cell = Cell::new_occupied(player.clone());
     assert_eq!(
         cell,
-        Cell { pallet:  [Some(player.clone()), None, None] },
+        Cell {
+            pallet: [Some(player.clone()), None, None]
+        },
     );
     assert_eq!(cell.owner(), Some(player.clone()));
     assert_eq!(cell.height(), 1);
@@ -131,7 +133,9 @@ fn unstack() {
     let unstacked = cell.unstack();
     assert_eq!(
         unstacked,
-        Ok(Cell { pallet: [None; PALLET_HEIGHT_LIMIT] }),
+        Ok(Cell {
+            pallet: [None; PALLET_HEIGHT_LIMIT]
+        }),
     );
     let empty_cell = unstacked.unwrap();
     let cannot_unstack = empty_cell.unstack();

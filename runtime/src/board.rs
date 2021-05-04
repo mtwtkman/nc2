@@ -22,10 +22,9 @@ impl Board {
     fn setup(player_a: &Player, player_b: &Player) -> CellMap {
         let mut cell_map = CellMap::new();
         let player_a_side_cells = Self::generate_initial_occupied_cells(player_a.clone(), Row::Top);
-        player_a_side_cells
-            .for_each(|(position, cell)| {
-                cell_map.insert(position, cell);
-            });
+        player_a_side_cells.for_each(|(position, cell)| {
+            cell_map.insert(position, cell);
+        });
         let empty_rows = [
             Row::MiddleFirst,
             Row::MiddleSecond,
@@ -34,19 +33,21 @@ impl Board {
         ]
         .iter()
         .flat_map(|row| Self::generate_initial_empty_cells(row.to_owned()));
-        empty_rows
-            .for_each(|(position, cell)| {
-                cell_map.insert(position, cell);
-            });
-        let player_b_side_cells = Self::generate_initial_occupied_cells(player_b.clone(), Row::Bottom);
-        player_b_side_cells
-            .for_each(|(position, cell)| {
-                cell_map.insert(position, cell);
-            });
+        empty_rows.for_each(|(position, cell)| {
+            cell_map.insert(position, cell);
+        });
+        let player_b_side_cells =
+            Self::generate_initial_occupied_cells(player_b.clone(), Row::Bottom);
+        player_b_side_cells.for_each(|(position, cell)| {
+            cell_map.insert(position, cell);
+        });
         cell_map
     }
 
-    fn generate_initial_occupied_cells(player: Player, side: Row) -> impl Iterator<Item=(Position, Cell)> {
+    fn generate_initial_occupied_cells(
+        player: Player,
+        side: Row,
+    ) -> impl Iterator<Item = (Position, Cell)> {
         [
             Column::LeftEdge,
             Column::MiddleFirst,
@@ -58,11 +59,11 @@ impl Board {
         .map(move |column| {
             let position = Position::new(column.to_owned(), side.clone());
             let cell = Cell::new_occupied(player.clone());
-            (position,cell)
+            (position, cell)
         })
     }
 
-    fn generate_initial_empty_cells(row: Row) -> impl Iterator<Item=(Position, Cell)> {
+    fn generate_initial_empty_cells(row: Row) -> impl Iterator<Item = (Position, Cell)> {
         [
             Column::LeftEdge,
             Column::MiddleFirst,
@@ -110,14 +111,12 @@ impl MovingRange {
 
 #[test]
 fn generate_initial_occupied_cells() {
-    use crate::{
-        cell::Cell,
-        position::Column,
-    };
+    use crate::{cell::Cell, position::Column};
 
     for side in [Row::Top, Row::Bottom].iter() {
         let player = Player::new();
-        let side_row = Board::generate_initial_occupied_cells(player.clone(), side.to_owned()).collect::<Vec<(Position, Cell)>>();
+        let side_row = Board::generate_initial_occupied_cells(player.clone(), side.to_owned())
+            .collect::<Vec<(Position, Cell)>>();
         let expected_cells = [
             Column::LeftEdge,
             Column::MiddleFirst,
@@ -162,7 +161,8 @@ fn generate_initial_empty_cells() {
             (position, cell)
         })
         .collect::<Vec<(Position, Cell)>>();
-        let row = Board::generate_initial_empty_cells(row.clone()).collect::<Vec<(Position, Cell)>>();
+        let row =
+            Board::generate_initial_empty_cells(row.clone()).collect::<Vec<(Position, Cell)>>();
         assert_eq!(row, expected_cells);
     }
 }
@@ -173,22 +173,19 @@ fn new() {
     let player_b = Player::new();
     let board = Board::new(&player_a, &player_b);
     let mut expected: CellMap = CellMap::new();
-    let columns =
-    [
+    let columns = [
         Column::LeftEdge,
         Column::MiddleFirst,
         Column::MiddleSecond,
         Column::MiddleThird,
         Column::RightEdge,
     ];
-    columns
-        .iter()
-        .for_each(|column| {
-            expected.insert(
-                Position::new(column.to_owned(), Row::Top),
-                Cell::new_occupied(player_a.clone()),
-            );
-        });
+    columns.iter().for_each(|column| {
+        expected.insert(
+            Position::new(column.to_owned(), Row::Top),
+            Cell::new_occupied(player_a.clone()),
+        );
+    });
     [
         Row::MiddleFirst,
         Row::MiddleSecond,
@@ -197,22 +194,18 @@ fn new() {
     ]
     .iter()
     .for_each(|row| {
-        columns
-            .iter()
-            .for_each(|column| {
-                expected.insert(
-                    Position::new(column.to_owned(), row.to_owned()),
-                    Cell::new_empty(),
-                );
-            });
-    });
-    columns
-        .iter()
-        .for_each(|column| {
+        columns.iter().for_each(|column| {
             expected.insert(
-                Position::new(column.to_owned(), Row::Bottom),
-                Cell::new_occupied(player_b.clone()),
+                Position::new(column.to_owned(), row.to_owned()),
+                Cell::new_empty(),
             );
         });
+    });
+    columns.iter().for_each(|column| {
+        expected.insert(
+            Position::new(column.to_owned(), Row::Bottom),
+            Cell::new_occupied(player_b.clone()),
+        );
+    });
     assert_eq!(board, Board { cell_map: expected });
 }
