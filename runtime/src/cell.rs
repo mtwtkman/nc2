@@ -181,3 +181,18 @@ fn stack() {
         .stack(&testing::spawn_player());
     assert_eq!(stacking_error, Err(Error::ReachedPalletHeightLimit));
 }
+
+#[test]
+fn unstack() {
+    let position = testing::spawn_position();
+    let player_1 = testing::spawn_player();
+    let cell = Cell::new_occupied(&position, &player_1);
+    let unstacked = cell.unstack();
+    assert_eq!(unstacked, Ok(Cell {
+        position: position.clone(),
+        pallet: Pallet { players: [None;PALLET_HEIGHT_LIMIT] },
+    }));
+    let empty_cell = unstacked.unwrap();
+    let cannot_unstack = empty_cell.unstack();
+    assert_eq!(cannot_unstack, Err(Error::PalletIsEmpty));
+}
