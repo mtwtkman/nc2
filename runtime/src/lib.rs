@@ -16,7 +16,7 @@ pub struct Game {
 impl Game {
     fn start() -> Self {
         let (player_a, player_b) = Self::spawn_players();
-        let board = Board::new(&player_a,&player_b);
+        let board = Board::new(&player_a, &player_b);
         Self {
             player_a: player_a.clone(),
             player_b,

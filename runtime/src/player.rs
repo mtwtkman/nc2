@@ -4,7 +4,9 @@ impl PlayerId {
     fn new() -> Self {
         use std::time::SystemTime;
 
-        let seed = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+        let seed = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap();
         Self(seed.as_nanos() as usize)
     }
 }

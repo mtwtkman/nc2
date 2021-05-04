@@ -201,7 +201,14 @@ fn right_edge_bottom_position() {
 #[test]
 fn left_edge_middle_row() {
     let left_edge = Column::LeftEdge;
-    for row in [Row::MiddleFirst, Row::MiddleSecond, Row::MiddleThird, Row::MiddleFourth].iter() {
+    for row in [
+        Row::MiddleFirst,
+        Row::MiddleSecond,
+        Row::MiddleThird,
+        Row::MiddleFourth,
+    ]
+    .iter()
+    {
         let position = Position::new(left_edge.clone(), row.to_owned());
         assert!(position.is_left_edge_middle_row());
     }
@@ -210,7 +217,14 @@ fn left_edge_middle_row() {
 #[test]
 fn right_edge_middle_row() {
     let right_edge = Column::RightEdge;
-    for row in [Row::MiddleFirst, Row::MiddleSecond, Row::MiddleThird, Row::MiddleFourth].iter() {
+    for row in [
+        Row::MiddleFirst,
+        Row::MiddleSecond,
+        Row::MiddleThird,
+        Row::MiddleFourth,
+    ]
+    .iter()
+    {
         let position = Position::new(right_edge.clone(), row.to_owned());
         assert!(position.is_right_edge_middle_row());
     }
@@ -219,7 +233,13 @@ fn right_edge_middle_row() {
 #[test]
 fn middle_column_top() {
     let top = Row::Top;
-    for column in [Column::MiddleFirst, Column::MiddleSecond, Column::MiddleThird].iter() {
+    for column in [
+        Column::MiddleFirst,
+        Column::MiddleSecond,
+        Column::MiddleThird,
+    ]
+    .iter()
+    {
         let position = Position::new(column.to_owned(), top.clone());
         assert!(position.is_middle_column_top());
     }
@@ -228,7 +248,13 @@ fn middle_column_top() {
 #[test]
 fn middle_column_bottom() {
     let bottom = Row::Bottom;
-    for column in [Column::MiddleFirst, Column::MiddleSecond, Column::MiddleThird].iter() {
+    for column in [
+        Column::MiddleFirst,
+        Column::MiddleSecond,
+        Column::MiddleThird,
+    ]
+    .iter()
+    {
         let position = Position::new(column.to_owned(), bottom.clone());
         assert!(position.is_middle_column_bottom());
     }

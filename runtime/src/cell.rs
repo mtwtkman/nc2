@@ -1,20 +1,17 @@
 use crate::player::Player;
 use crate::position::Position;
-use crate::result::{Result, Error};
+use crate::result::{Error, Result};
 
-const PALLET_HEIGHT_LIMIT: usize = 3;
+pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-struct Pallet {
-    players: [Option<Player>;PALLET_HEIGHT_LIMIT],
+pub(crate) struct Pallet {
+    pub(crate) players: [Option<Player>; PALLET_HEIGHT_LIMIT],
 }
 
 impl Pallet {
     fn height(&self) -> usize {
-        self.players
-            .iter()
-            .filter(|x| x.is_some())
-            .count()
+        self.players.iter().filter(|x| x.is_some()).count()
     }
 
     fn apex(&self) -> Option<Player> {
@@ -31,7 +28,7 @@ impl Pallet {
 
     fn empty() -> Self {
         Self {
-            players: [None;PALLET_HEIGHT_LIMIT],
+            players: [None; PALLET_HEIGHT_LIMIT],
         }
     }
 
@@ -71,7 +68,7 @@ impl Pallet {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub(crate) struct Cell {
     pub(crate) position: Position,
-    pallet: Pallet,
+    pub(crate) pallet: Pallet,
 }
 impl Cell {
     pub(crate) fn new_empty(position: &Position) -> Self {
@@ -116,8 +113,8 @@ impl Cell {
 #[cfg(test)]
 mod testing {
     use crate::{
-        position::{Row, Column, Position},
         player::Player,
+        position::{Column, Position, Row},
     };
 
     pub(crate) fn spawn_player() -> Player {
@@ -134,10 +131,15 @@ fn new_occupied() {
     let position = testing::spawn_position();
     let player = testing::spawn_player();
     let cell = Cell::new_occupied(&position, &player);
-    assert_eq!(cell, Cell {
-        position,
-        pallet: Pallet { players: [Some(player.clone()), None, None]},
-    });
+    assert_eq!(
+        cell,
+        Cell {
+            position,
+            pallet: Pallet {
+                players: [Some(player.clone()), None, None]
+            },
+        }
+    );
     assert_eq!(cell.owner(), Some(player.clone()));
     assert_eq!(cell.pallet.height(), 1);
     assert!(!cell.is_empty());
@@ -147,10 +149,15 @@ fn new_occupied() {
 fn new_empty() {
     let position = testing::spawn_position();
     let cell = Cell::new_empty(&position);
-    assert_eq!(cell, Cell {
-        position,
-        pallet: Pallet { players: [None;PALLET_HEIGHT_LIMIT] },
-    });
+    assert_eq!(
+        cell,
+        Cell {
+            position,
+            pallet: Pallet {
+                players: [None; PALLET_HEIGHT_LIMIT]
+            },
+        }
+    );
     assert!(cell.is_empty());
     assert_eq!(cell.owner(), None);
 }
@@ -174,7 +181,10 @@ fn stack() {
     let second_stacked = cell_has_one_player.stack(&player_2);
     assert!(second_stacked.is_ok());
     let cell_has_two_players = second_stacked.unwrap();
-    assert_eq!(&cell_has_two_players.pallet.players, &[Some(player_1.clone()), Some(player_2.clone()), None]);
+    assert_eq!(
+        &cell_has_two_players.pallet.players,
+        &[Some(player_1.clone()), Some(player_2.clone()), None]
+    );
     let stacking_error = cell_has_two_players
         .stack(&testing::spawn_player())
         .unwrap()
@@ -188,10 +198,15 @@ fn unstack() {
     let player_1 = testing::spawn_player();
     let cell = Cell::new_occupied(&position, &player_1);
     let unstacked = cell.unstack();
-    assert_eq!(unstacked, Ok(Cell {
-        position: position.clone(),
-        pallet: Pallet { players: [None;PALLET_HEIGHT_LIMIT] },
-    }));
+    assert_eq!(
+        unstacked,
+        Ok(Cell {
+            position: position.clone(),
+            pallet: Pallet {
+                players: [None; PALLET_HEIGHT_LIMIT]
+            },
+        })
+    );
     let empty_cell = unstacked.unwrap();
     let cannot_unstack = empty_cell.unstack();
     assert_eq!(cannot_unstack, Err(Error::PalletIsEmpty));
