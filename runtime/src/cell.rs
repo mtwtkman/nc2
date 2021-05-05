@@ -3,17 +3,16 @@ use crate::result::{Error, Result};
 
 pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub(crate) struct Cell {
     pub(crate) pallet: [Option<Player>; PALLET_HEIGHT_LIMIT],
 }
-
 impl Cell {
     fn height(&self) -> usize {
         self.pallet.iter().filter(|x| x.is_some()).count()
     }
 
-    fn owner(&self) -> Option<Player> {
+    pub(crate) fn owner(&self) -> Option<Player> {
         if self.is_empty() {
             None
         } else {
@@ -37,7 +36,7 @@ impl Cell {
         }
     }
 
-    fn stack(&self, player: &Player) -> Result<Self> {
+    pub(crate) fn stack(&self, player: &Player) -> Result<Self> {
         let height = self.height();
         if height == PALLET_HEIGHT_LIMIT {
             Err(Error::ReachedPalletHeightLimit)
@@ -53,7 +52,7 @@ impl Cell {
         }
     }
 
-    fn unstack(&self) -> Result<Self> {
+    pub(crate) fn unstack(&self) -> Result<Self> {
         if self.is_empty() {
             Err(Error::PalletIsEmpty)
         } else {

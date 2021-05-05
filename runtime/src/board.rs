@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 use crate::{
     cell::Cell,
@@ -15,11 +15,11 @@ pub(crate) struct Board {
 impl Board {
     pub(crate) fn new(player_a: &Player, player_b: &Player) -> Self {
         Self {
-            cell_map: Self::setup(player_a, player_b),
+            cell_map: Self::setup_cell_map(player_a, player_b),
         }
     }
 
-    fn setup(player_a: &Player, player_b: &Player) -> CellMap {
+    fn setup_cell_map(player_a: &Player, player_b: &Player) -> CellMap {
         let mut cell_map = CellMap::new();
         let player_a_side_cells = Self::generate_initial_occupied_cells(player_a.clone(), Row::Top);
         player_a_side_cells.for_each(|(position, cell)| {
@@ -77,6 +77,19 @@ impl Board {
             let cell = Cell::new_empty();
             (position, cell)
         })
+    }
+
+    fn player_positions(&self, player: &Player) -> BTreeSet<Position> {
+        self.cell_map
+            .iter()
+            .fold(BTreeSet::new(), |mut acc, (position, cell)| {
+                if let Some(owner) = cell.owner() {
+                    if owner == player.clone() {
+                        acc.insert(position.clone());
+                    }
+                }
+                acc
+            })
     }
 }
 
@@ -208,4 +221,78 @@ fn new() {
         );
     });
     assert_eq!(board, Board { cell_map: expected });
+}
+
+#[test]
+fn player_position() {
+    let player_a = Player::new();
+    let player_b = Player::new();
+    let mut board = Board::new(&player_a, &player_b);
+    let left_edge_top_position = Position::new(Column::LeftEdge, Row::Top);
+    assert_eq!(
+        board.player_positions(&player_a),
+        vec![
+            left_edge_top_position.clone(),
+            Position::new(Column::MiddleFirst, Row::Top),
+            Position::new(Column::MiddleSecond, Row::Top),
+            Position::new(Column::MiddleThird, Row::Top),
+            Position::new(Column::RightEdge, Row::Top),
+        ]
+        .into_iter()
+        .fold(BTreeSet::new(), |mut acc, position| {
+            acc.insert(position);
+            acc
+        })
+    );
+    assert_eq!(
+        board.player_positions(&player_b),
+        vec![
+            Position::new(Column::LeftEdge, Row::Bottom),
+            Position::new(Column::MiddleFirst, Row::Bottom),
+            Position::new(Column::MiddleSecond, Row::Bottom),
+            Position::new(Column::MiddleThird, Row::Bottom),
+            Position::new(Column::RightEdge, Row::Bottom),
+        ]
+        .into_iter()
+        .fold(BTreeSet::new(), |mut acc, position| {
+            acc.insert(position);
+            acc
+        })
+    );
+    let (position, mut cell) = board
+        .cell_map
+        .remove_entry(&left_edge_top_position)
+        .unwrap();
+    cell.pallet[1] = Some(player_b.clone());
+    board.cell_map.insert(position, cell);
+    assert_eq!(
+        board.player_positions(&player_a),
+        vec![
+            Position::new(Column::MiddleFirst, Row::Top),
+            Position::new(Column::MiddleSecond, Row::Top),
+            Position::new(Column::MiddleThird, Row::Top),
+            Position::new(Column::RightEdge, Row::Top),
+        ]
+        .into_iter()
+        .fold(BTreeSet::new(), |mut acc, position| {
+            acc.insert(position);
+            acc
+        })
+    );
+    assert_eq!(
+        board.player_positions(&player_b),
+        vec![
+            left_edge_top_position.clone(),
+            Position::new(Column::LeftEdge, Row::Bottom),
+            Position::new(Column::MiddleFirst, Row::Bottom),
+            Position::new(Column::MiddleSecond, Row::Bottom),
+            Position::new(Column::MiddleThird, Row::Bottom),
+            Position::new(Column::RightEdge, Row::Bottom),
+        ]
+        .into_iter()
+        .fold(BTreeSet::new(), |mut acc, position| {
+            acc.insert(position);
+            acc
+        })
+    );
 }

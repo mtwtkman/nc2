@@ -1,6 +1,8 @@
+use std::cmp::Ordering;
+
 use crate::result::{Error, Result};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub(crate) enum Row {
     Top,
     MiddleFirst,
@@ -9,6 +11,7 @@ pub(crate) enum Row {
     MiddleFourth,
     Bottom,
 }
+
 impl Row {
     fn is_top(&self) -> bool {
         self == &Self::Top
@@ -48,7 +51,7 @@ impl Row {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub(crate) enum Column {
     LeftEdge,
     MiddleFirst,
@@ -93,11 +96,12 @@ impl Column {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone, PartialOrd, Ord)]
 pub(crate) struct Position {
     x: Column,
     y: Row,
 }
+
 impl Position {
     pub(crate) fn new(x: Column, y: Row) -> Self {
         Self { x, y }
@@ -438,4 +442,36 @@ fn can_move_down() {
     );
     let cannot_move_to_bottom = moved_to_bottom.unwrap().move_down();
     assert_eq!(&cannot_move_to_bottom, &Err(Error::ReachedBottom));
+}
+
+#[test]
+fn row_order() {
+    assert!(Row::Top < Row::MiddleFirst);
+    assert!(Row::MiddleFirst < Row::MiddleSecond);
+    assert!(Row::MiddleSecond < Row::MiddleThird);
+    assert!(Row::MiddleThird < Row::MiddleFourth);
+    assert!(Row::MiddleFourth < Row::Bottom);
+}
+
+#[test]
+fn column_order() {
+    assert!(Column::LeftEdge < Column::MiddleFirst);
+    assert!(Column::MiddleFirst < Column::MiddleSecond);
+    assert!(Column::MiddleSecond < Column::MiddleThird);
+    assert!(Column::MiddleThird < Column::RightEdge);
+}
+
+#[test]
+fn position_order() {
+    assert!(
+        Position::new(Column::LeftEdge, Row::Top)
+            < Position::new(Column::LeftEdge, Row::MiddleFirst)
+    );
+    assert!(
+        Position::new(Column::LeftEdge, Row::Top) < Position::new(Column::MiddleFirst, Row::Top)
+    );
+    assert!(
+        Position::new(Column::LeftEdge, Row::Top)
+            < Position::new(Column::MiddleFirst, Row::MiddleFirst)
+    );
 }
