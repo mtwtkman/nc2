@@ -319,8 +319,7 @@ mod moving_range_spec {
         let player_b = Player::new();
         let board = Board::new(&player_a, &player_b);
         let left_top_corner = Position::new(Column::LeftEdge, Row::Top);
-        let left_top_corner_moving_range = board.detect_moving_range(&left_top_corner);
-        assert_eq!(left_top_corner_moving_range, MovingRange {
+        assert_eq!(board.detect_moving_range(&left_top_corner), MovingRange {
             up: None,
             down: Some(Cell::new_empty()),
             right: Some(Cell::new_occupied(player_a.clone())),
@@ -330,6 +329,45 @@ mod moving_range_spec {
             up_left: None,
             down_left: None,
             pivot: Cell::new_occupied(player_a.clone()),
+        });
+
+        let right_top_corner = Position::new(Column::RightEdge, Row::Top);
+        assert_eq!(board.detect_moving_range(&right_top_corner), MovingRange {
+            up: None,
+            down: Some(Cell::new_empty()),
+            right: None,
+            left: Some(Cell::new_occupied(player_a.clone())),
+            up_right: None,
+            down_right: None,
+            up_left: None,
+            down_left: Some(Cell::new_empty()),
+            pivot: Cell::new_occupied(player_a.clone()),
+        });
+
+        let left_bottom_corner = Position::new(Column::LeftEdge, Row::Bottom);
+        assert_eq!(board.detect_moving_range(&left_bottom_corner), MovingRange {
+            up: Some(Cell::new_empty()),
+            down: None,
+            right: Some(Cell::new_occupied(player_b.clone())),
+            left: None,
+            up_right: Some(Cell::new_empty()),
+            down_right: None,
+            up_left: None,
+            down_left: None,
+            pivot: Cell::new_occupied(player_b.clone()),
+        });
+
+        let right_bottom_corner = Position::new(Column::RightEdge, Row::Bottom);
+        assert_eq!(board.detect_moving_range(&right_bottom_corner), MovingRange{
+            up: Some(Cell::new_empty()),
+            down: None,
+            right: None,
+            left: Some(Cell::new_occupied(player_b.clone())),
+            up_right: None,
+            down_right: None,
+            up_left: Some(Cell::new_empty()),
+            down_left: None,
+            pivot: Cell::new_occupied(player_b.clone()),
         });
     }
 }
