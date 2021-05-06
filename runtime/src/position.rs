@@ -137,6 +137,22 @@ impl Position {
         self.move_horizon(self.x.move_left())
     }
 
+    pub(crate) fn move_up_right(&self) -> Result<Self>  {
+        self.move_up().and_then(|p| p.move_right())
+    }
+
+    pub(crate) fn move_up_left(&self) -> Result<Self> {
+        self.move_up().and_then(|p| p.move_left())
+    }
+
+    pub(crate) fn move_down_right(&self) -> Result<Self> {
+        self.move_down().and_then(|p| p.move_right())
+    }
+
+    pub(crate) fn move_down_left(&self) -> Result<Self> {
+        self.move_down().and_then(|p| p.move_left())
+    }
+
     pub(crate) fn is_left_edge_top(&self) -> bool {
         self.x.is_left_edge() && self.y.is_top()
     }
@@ -442,6 +458,94 @@ fn can_move_down() {
     );
     let cannot_move_to_bottom = moved_to_bottom.unwrap().move_down();
     assert_eq!(&cannot_move_to_bottom, &Err(Error::ReachedBottom));
+}
+
+#[test]
+fn can_move_up_right() {
+    let position = Position::new(Column::MiddleThird, Row::MiddleFirst);
+    let moved_to_up_right_corner = position.move_up_right();
+    assert_eq!(
+        &moved_to_up_right_corner,
+        &Ok(Position {
+            x: Column::RightEdge,
+            y: Row::Top,
+        }),
+    );
+    let up_right_corner = moved_to_up_right_corner.unwrap();
+    assert_eq!(
+        up_right_corner.move_up_right(),
+        Err(Error::ReachedTop),
+    );
+    assert_eq!(
+        Position::new(Column::RightEdge, Row::MiddleFirst).move_up_right(),
+        Err(Error::ReachedRightEdge),
+    );
+}
+
+#[test]
+fn can_move_up_left() {
+    let position = Position::new(Column::MiddleFirst, Row::MiddleFirst);
+    let moved_to_up_left_corner = position.move_up_left();
+    assert_eq!(
+        &moved_to_up_left_corner,
+        &Ok(Position {
+            x: Column::LeftEdge,
+            y: Row::Top,
+        }),
+    );
+    let up_left_corner = moved_to_up_left_corner.unwrap();
+    assert_eq!(
+        up_left_corner.move_up_left(),
+        Err(Error::ReachedTop),
+    );
+    assert_eq!(
+        Position::new(Column::LeftEdge, Row::MiddleFirst).move_up_left(),
+        Err(Error::ReachedLeftEdge),
+    );
+}
+
+#[test]
+fn can_move_down_right() {
+    let position = Position::new(Column::MiddleThird, Row::MiddleFourth);
+    let moved_to_down_right_corner = position.move_down_right();
+    assert_eq!(
+        &moved_to_down_right_corner,
+        &Ok(Position {
+            x: Column::RightEdge,
+            y: Row::Bottom,
+        }),
+    );
+    let down_right_corner = moved_to_down_right_corner.unwrap();
+    assert_eq!(
+        down_right_corner.move_down_right(),
+        Err(Error::ReachedBottom),
+    );
+    assert_eq!(
+        Position::new(Column::RightEdge, Row::MiddleFourth).move_down_right(),
+        Err(Error::ReachedRightEdge),
+    );
+}
+
+#[test]
+fn can_move_down_left() {
+    let position = Position::new(Column::MiddleFirst, Row::MiddleFourth);
+    let moved_to_down_left_corner = position.move_down_left();
+    assert_eq!(
+        &moved_to_down_left_corner,
+        &Ok(Position {
+            x: Column::LeftEdge,
+            y: Row::Bottom,
+        }),
+    );
+    let down_left_corner = moved_to_down_left_corner.unwrap();
+    assert_eq!(
+        down_left_corner.move_down_left(),
+        Err(Error::ReachedBottom),
+    );
+    assert_eq!(
+        Position::new(Column::LeftEdge, Row::MiddleFourth).move_down_left(),
+        Err(Error::ReachedLeftEdge),
+    );
 }
 
 #[test]
