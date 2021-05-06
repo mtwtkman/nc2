@@ -4,6 +4,7 @@ use crate::{
     cell::Cell,
     player::Player,
     position::{Column, Position, Row},
+    result::Result,
 };
 
 type CellMap = HashMap<Position, Cell>;
@@ -91,6 +92,28 @@ impl Board {
                 acc
             })
     }
+
+    fn position_to_cell(&self, position: Result<Position>) -> Option<Cell> {
+        position
+            .ok()
+            .and_then(|p| self.cell_map.get(&p))
+            .map(|x| x.clone())
+    }
+
+    fn detect_moving_range(&self, pivot_position: &Position) -> MovingRange {
+        let cell = self.cell_map.get(&pivot_position).unwrap().clone();
+        MovingRange {
+            up: self.position_to_cell(pivot_position.move_up()),
+            down: self.position_to_cell(pivot_position.move_down()),
+            left: self.position_to_cell(pivot_position.move_left()),
+            right: self.position_to_cell(pivot_position.move_right()),
+            up_right: self.position_to_cell(pivot_position.move_up_right()),
+            down_right: self.position_to_cell(pivot_position.move_down_right()),
+            up_left: self.position_to_cell(pivot_position.move_up_left()),
+            down_left: self.position_to_cell(pivot_position.move_down_left()),
+            pivot: cell,
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -104,22 +127,6 @@ struct MovingRange {
     up_left: Option<Cell>,
     down_left: Option<Cell>,
     pivot: Cell,
-}
-
-impl MovingRange {
-    fn default(pivot: Cell) -> Self {
-        Self {
-            up: None,
-            down: None,
-            right: None,
-            left: None,
-            up_right: None,
-            down_right: None,
-            up_left: None,
-            down_left: None,
-            pivot,
-        }
-    }
 }
 
 #[test]
@@ -295,4 +302,34 @@ fn player_position() {
             acc
         })
     );
+}
+
+#[cfg(test)]
+mod moving_range_spec {
+    use super::{MovingRange, Board};
+    use crate::{
+        player::Player,
+        cell::Cell,
+        position::{Position, Row, Column},
+    };
+
+    #[test]
+    fn corner() {
+        let player_a = Player::new();
+        let player_b = Player::new();
+        let board = Board::new(&player_a, &player_b);
+        let left_top_corner = Position::new(Column::LeftEdge, Row::Top);
+        let left_top_corner_moving_range = board.detect_moving_range(&left_top_corner);
+        assert_eq!(left_top_corner_moving_range, MovingRange {
+            up: None,
+            down: Some(Cell::new_empty()),
+            right: Some(Cell::new_occupied(player_a.clone())),
+            left: None,
+            up_right: None,
+            down_right: Some(Cell::new_empty()),
+            up_left: None,
+            down_left: None,
+            pivot: Cell::new_occupied(player_a.clone()),
+        });
+    }
 }
