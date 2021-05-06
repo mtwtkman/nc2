@@ -463,17 +463,17 @@ fn can_move_down() {
 #[test]
 fn can_move_up_right() {
     let position = Position::new(Column::MiddleThird, Row::MiddleFirst);
-    let moved_to_up_right_corner = position.move_up_right();
+    let moved_to_right_top_corner = position.move_up_right();
     assert_eq!(
-        &moved_to_up_right_corner,
+        &moved_to_right_top_corner,
         &Ok(Position {
             x: Column::RightEdge,
             y: Row::Top,
         }),
     );
-    let up_right_corner = moved_to_up_right_corner.unwrap();
+    let right_top_corner = moved_to_right_top_corner.unwrap();
     assert_eq!(
-        up_right_corner.move_up_right(),
+        right_top_corner.move_up_right(),
         Err(Error::ReachedTop),
     );
     assert_eq!(
@@ -485,17 +485,17 @@ fn can_move_up_right() {
 #[test]
 fn can_move_up_left() {
     let position = Position::new(Column::MiddleFirst, Row::MiddleFirst);
-    let moved_to_up_left_corner = position.move_up_left();
+    let moved_to_left_top_corner = position.move_up_left();
     assert_eq!(
-        &moved_to_up_left_corner,
+        &moved_to_left_top_corner,
         &Ok(Position {
             x: Column::LeftEdge,
             y: Row::Top,
         }),
     );
-    let up_left_corner = moved_to_up_left_corner.unwrap();
+    let left_top_corner = moved_to_left_top_corner.unwrap();
     assert_eq!(
-        up_left_corner.move_up_left(),
+        left_top_corner.move_up_left(),
         Err(Error::ReachedTop),
     );
     assert_eq!(
@@ -507,17 +507,17 @@ fn can_move_up_left() {
 #[test]
 fn can_move_down_right() {
     let position = Position::new(Column::MiddleThird, Row::MiddleFourth);
-    let moved_to_down_right_corner = position.move_down_right();
+    let moved_to_right_bottom_corner = position.move_down_right();
     assert_eq!(
-        &moved_to_down_right_corner,
+        &moved_to_right_bottom_corner,
         &Ok(Position {
             x: Column::RightEdge,
             y: Row::Bottom,
         }),
     );
-    let down_right_corner = moved_to_down_right_corner.unwrap();
+    let right_bottom_corner = moved_to_right_bottom_corner.unwrap();
     assert_eq!(
-        down_right_corner.move_down_right(),
+        right_bottom_corner.move_down_right(),
         Err(Error::ReachedBottom),
     );
     assert_eq!(
@@ -529,17 +529,17 @@ fn can_move_down_right() {
 #[test]
 fn can_move_down_left() {
     let position = Position::new(Column::MiddleFirst, Row::MiddleFourth);
-    let moved_to_down_left_corner = position.move_down_left();
+    let moved_to_left_bottom_corner = position.move_down_left();
     assert_eq!(
-        &moved_to_down_left_corner,
+        &moved_to_left_bottom_corner,
         &Ok(Position {
             x: Column::LeftEdge,
             y: Row::Bottom,
         }),
     );
-    let down_left_corner = moved_to_down_left_corner.unwrap();
+    let left_bottom_corner = moved_to_left_bottom_corner.unwrap();
     assert_eq!(
-        down_left_corner.move_down_left(),
+        left_bottom_corner.move_down_left(),
         Err(Error::ReachedBottom),
     );
     assert_eq!(
