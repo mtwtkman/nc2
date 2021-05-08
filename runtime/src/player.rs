@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 struct PlayerId(usize);
 impl PlayerId {
     fn new() -> Self {
@@ -11,7 +11,7 @@ impl PlayerId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Hash)]
 pub(crate) struct Player {
     id: PlayerId,
 }

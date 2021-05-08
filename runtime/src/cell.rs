@@ -1,10 +1,14 @@
-use crate::player::Player;
-use crate::result::{Error, Result};
+use crate::{
+    player::Player,
+    position::Position,
+    result::{Error, Result},
+};
 
 pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Copy)]
 pub(crate) struct Cell {
+    pub(crate) position: Position,
     pub(crate) pallet: [Option<Player>; PALLET_HEIGHT_LIMIT],
 }
 impl Cell {
@@ -24,14 +28,20 @@ impl Cell {
         self.height() == 0
     }
 
-    pub(crate) fn new_empty() -> Self {
+    pub(crate) fn is_fullfilled(&self) -> bool {
+        self.height() == PALLET_HEIGHT_LIMIT
+    }
+
+    pub(crate) fn new_empty(position: Position) -> Self {
         Self {
+            position,
             pallet: [None; PALLET_HEIGHT_LIMIT],
         }
     }
 
-    pub(crate) fn new_occupied(player: Player) -> Self {
+    pub(crate) fn new_occupied(position: Position, player: Player) -> Self {
         Self {
+            position,
             pallet: [Some(player), None, None],
         }
     }
@@ -47,7 +57,10 @@ impl Cell {
             } else {
                 let mut players = self.pallet.clone();
                 players[height] = Some(player.clone());
-                Ok(Self { pallet: players })
+                Ok(Self {
+                    position: self.position.clone(),
+                    pallet: players,
+                })
             }
         }
     }
@@ -58,7 +71,10 @@ impl Cell {
         } else {
             let mut players = self.pallet.clone();
             players[self.height() - 1] = None;
-            Ok(Self { pallet: players })
+            Ok(Self {
+                position: self.position.clone(),
+                pallet: players,
+            })
         }
     }
 }
@@ -68,13 +84,18 @@ fn spawn_player() -> Player {
     Player::new()
 }
 
+#[cfg(test)]
+use crate::position::{Column, Row};
+
 #[test]
 fn new_occupied() {
     let player = spawn_player();
-    let cell = Cell::new_occupied(player.clone());
+    let position = Position::new(Column::LeftEdge, Row::Top);
+    let cell = Cell::new_occupied(position.clone(), player.clone());
     assert_eq!(
         cell,
         Cell {
+            position,
             pallet: [Some(player.clone()), None, None]
         },
     );
@@ -85,10 +106,12 @@ fn new_occupied() {
 
 #[test]
 fn new_empty() {
-    let cell = Cell::new_empty();
+    let position = Position::new(Column::LeftEdge, Row::Top);
+    let cell = Cell::new_empty(position.clone());
     assert_eq!(
         cell,
         Cell {
+            position,
             pallet: [None; PALLET_HEIGHT_LIMIT],
         },
     );
@@ -99,7 +122,8 @@ fn new_empty() {
 #[test]
 fn stack() {
     let player_1 = spawn_player();
-    let cell = Cell::new_empty();
+    let position = Position::new(Column::LeftEdge, Row::Top);
+    let cell = Cell::new_empty(position.clone());
     let first_stacked = cell.stack(&player_1);
     assert!(first_stacked.is_ok());
     let cell_has_one_player = first_stacked.unwrap();
@@ -128,15 +152,31 @@ fn stack() {
 #[test]
 fn unstack() {
     let player_1 = spawn_player();
-    let cell = Cell::new_occupied(player_1.clone());
+    let position = Position::new(Column::LeftEdge, Row::Top);
+    let cell = Cell::new_occupied(position.clone(), player_1.clone());
     let unstacked = cell.unstack();
     assert_eq!(
         unstacked,
         Ok(Cell {
+            position,
             pallet: [None; PALLET_HEIGHT_LIMIT]
         }),
     );
     let empty_cell = unstacked.unwrap();
     let cannot_unstack = empty_cell.unstack();
     assert_eq!(cannot_unstack, Err(Error::PalletIsEmpty));
+}
+
+#[test]
+fn is_reached_stacking_limit() {
+    let player_a = spawn_player();
+    let player_b = spawn_player();
+    let position = Position::new(Column::LeftEdge, Row::Top);
+    let cell = Cell::new_occupied(position, player_a.clone());
+    assert!(cell
+        .stack(&player_b)
+        .unwrap()
+        .stack(&player_a)
+        .unwrap()
+        .is_fullfilled())
 }

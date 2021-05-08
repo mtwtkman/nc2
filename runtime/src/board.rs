@@ -7,7 +7,8 @@ use crate::{
     result::Result,
 };
 
-type CellMap = HashMap<Position, Cell>;
+type Field = HashMap<Position, Cell>;
+type CellMap = HashMap<Cell, MovingRange>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Board {
@@ -15,16 +16,15 @@ pub(crate) struct Board {
 }
 impl Board {
     pub(crate) fn new(player_a: &Player, player_b: &Player) -> Self {
-        Self {
-            cell_map: Self::setup_cell_map(player_a, player_b),
-        }
+        let cell_map = Self::setup_cell_map(player_a, player_b);
+        Self { cell_map }
     }
 
-    fn setup_cell_map(player_a: &Player, player_b: &Player) -> CellMap {
-        let mut cell_map = CellMap::new();
+    fn build_initial_field(player_a: &Player, player_b: &Player) -> Field {
+        let mut field = Field::new();
         let player_a_side_cells = Self::generate_initial_occupied_cells(player_a.clone(), Row::Top);
         player_a_side_cells.for_each(|(position, cell)| {
-            cell_map.insert(position, cell);
+            field.insert(position, cell);
         });
         let empty_rows = [
             Row::MiddleFirst,
@@ -35,14 +35,22 @@ impl Board {
         .iter()
         .flat_map(|row| Self::generate_initial_empty_cells(row.to_owned()));
         empty_rows.for_each(|(position, cell)| {
-            cell_map.insert(position, cell);
+            field.insert(position, cell);
         });
         let player_b_side_cells =
             Self::generate_initial_occupied_cells(player_b.clone(), Row::Bottom);
         player_b_side_cells.for_each(|(position, cell)| {
-            cell_map.insert(position, cell);
+            field.insert(position, cell);
         });
-        cell_map
+        field
+    }
+
+    fn setup_cell_map(player_a: &Player, player_b: &Player) -> CellMap {
+        let field = Self::build_initial_field(player_a, player_b);
+        field.iter().fold(CellMap::new(), |mut acc, (_, cell)| {
+            acc.insert(cell.clone(), MovingRange::new(&cell, &field));
+            acc
+        })
     }
 
     fn generate_initial_occupied_cells(
@@ -59,7 +67,7 @@ impl Board {
         .iter()
         .map(move |column| {
             let position = Position::new(column.to_owned(), side.clone());
-            let cell = Cell::new_occupied(player.clone());
+            let cell = Cell::new_occupied(position.clone(), player.clone());
             (position, cell)
         })
     }
@@ -75,7 +83,7 @@ impl Board {
         .iter()
         .map(move |column| {
             let position = Position::new(column.to_owned(), row.clone());
-            let cell = Cell::new_empty();
+            let cell = Cell::new_empty(position.clone());
             (position, cell)
         })
     }
@@ -83,36 +91,14 @@ impl Board {
     fn player_positions(&self, player: &Player) -> BTreeSet<Position> {
         self.cell_map
             .iter()
-            .fold(BTreeSet::new(), |mut acc, (position, cell)| {
+            .fold(BTreeSet::new(), |mut acc, (cell, _)| {
                 if let Some(owner) = cell.owner() {
                     if owner == player.clone() {
-                        acc.insert(position.clone());
+                        acc.insert(cell.position.clone());
                     }
                 }
                 acc
             })
-    }
-
-    fn position_to_cell(&self, position: Result<Position>) -> Option<Cell> {
-        position
-            .ok()
-            .and_then(|p| self.cell_map.get(&p))
-            .map(|x| x.clone())
-    }
-
-    fn detect_moving_range(&self, pivot_position: &Position) -> MovingRange {
-        let cell = self.cell_map.get(&pivot_position).unwrap().clone();
-        MovingRange {
-            up: self.position_to_cell(pivot_position.move_up()),
-            down: self.position_to_cell(pivot_position.move_down()),
-            left: self.position_to_cell(pivot_position.move_left()),
-            right: self.position_to_cell(pivot_position.move_right()),
-            up_right: self.position_to_cell(pivot_position.move_up_right()),
-            down_right: self.position_to_cell(pivot_position.move_down_right()),
-            up_left: self.position_to_cell(pivot_position.move_up_left()),
-            down_left: self.position_to_cell(pivot_position.move_down_left()),
-            pivot: cell,
-        }
     }
 }
 
@@ -126,7 +112,43 @@ struct MovingRange {
     down_right: Option<Cell>,
     up_left: Option<Cell>,
     down_left: Option<Cell>,
-    pivot: Cell,
+}
+
+impl MovingRange {
+    fn new(cell: &Cell, field: &Field) -> Self {
+        Self {
+            up: Self::destination(cell, cell.position.move_up(), field),
+            down: Self::destination(cell, cell.position.move_down(), field),
+            left: Self::destination(cell, cell.position.move_left(), field),
+            right: Self::destination(cell, cell.position.move_right(), field),
+            up_right: Self::destination(cell, cell.position.move_up_right(), field),
+            down_right: Self::destination(cell, cell.position.move_down_right(), field),
+            up_left: Self::destination(cell, cell.position.move_up_left(), field),
+            down_left: Self::destination(cell, cell.position.move_down_left(), field),
+        }
+    }
+
+    fn destination(pivot: &Cell, moved: Result<Position>, field: &Field) -> Option<Cell> {
+        moved.ok().and_then(|dest| {
+            if let Some(cell) = field.get(&dest) {
+                if Self::is_not_owned(pivot, cell) && !Self::is_reached_stacking_limit(cell) {
+                    Some(cell.clone())
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
+    }
+
+    fn is_not_owned(from_cell: &Cell, to_cell: &Cell) -> bool {
+        from_cell.owner() != to_cell.owner()
+    }
+
+    fn is_reached_stacking_limit(to_cell: &Cell) -> bool {
+        to_cell.is_fullfilled()
+    }
 }
 
 #[test]
@@ -147,7 +169,7 @@ fn generate_initial_occupied_cells() {
         .iter()
         .map(|column| {
             let position = Position::new(column.to_owned(), side.to_owned());
-            let cell = Cell::new_occupied(player.clone());
+            let cell = Cell::new_occupied(position.clone(), player.clone());
             (position, cell)
         })
         .collect::<Vec<(Position, Cell)>>();
@@ -177,7 +199,7 @@ fn generate_initial_empty_cells() {
         .iter()
         .map(move |column| {
             let position = Position::new(column.to_owned(), row.to_owned());
-            let cell = Cell::new_empty();
+            let cell = Cell::new_empty(position.clone());
             (position, cell)
         })
         .collect::<Vec<(Position, Cell)>>();
@@ -187,187 +209,61 @@ fn generate_initial_empty_cells() {
     }
 }
 
-#[test]
-fn new() {
-    let player_a = Player::new();
-    let player_b = Player::new();
-    let board = Board::new(&player_a, &player_b);
-    let mut expected: CellMap = CellMap::new();
-    let columns = [
-        Column::LeftEdge,
-        Column::MiddleFirst,
-        Column::MiddleSecond,
-        Column::MiddleThird,
-        Column::RightEdge,
-    ];
-    columns.iter().for_each(|column| {
-        expected.insert(
-            Position::new(column.to_owned(), Row::Top),
-            Cell::new_occupied(player_a.clone()),
-        );
-    });
-    [
-        Row::MiddleFirst,
-        Row::MiddleSecond,
-        Row::MiddleThird,
-        Row::MiddleFourth,
-    ]
-    .iter()
-    .for_each(|row| {
-        columns.iter().for_each(|column| {
-            expected.insert(
-                Position::new(column.to_owned(), row.to_owned()),
-                Cell::new_empty(),
-            );
-        });
-    });
-    columns.iter().for_each(|column| {
-        expected.insert(
-            Position::new(column.to_owned(), Row::Bottom),
-            Cell::new_occupied(player_b.clone()),
-        );
-    });
-    assert_eq!(board, Board { cell_map: expected });
-}
-
-#[test]
-fn player_position() {
-    let player_a = Player::new();
-    let player_b = Player::new();
-    let mut board = Board::new(&player_a, &player_b);
-    let left_edge_top_position = Position::new(Column::LeftEdge, Row::Top);
-    assert_eq!(
-        board.player_positions(&player_a),
-        vec![
-            left_edge_top_position.clone(),
-            Position::new(Column::MiddleFirst, Row::Top),
-            Position::new(Column::MiddleSecond, Row::Top),
-            Position::new(Column::MiddleThird, Row::Top),
-            Position::new(Column::RightEdge, Row::Top),
-        ]
-        .into_iter()
-        .fold(BTreeSet::new(), |mut acc, position| {
-            acc.insert(position);
-            acc
-        })
-    );
-    assert_eq!(
-        board.player_positions(&player_b),
-        vec![
-            Position::new(Column::LeftEdge, Row::Bottom),
-            Position::new(Column::MiddleFirst, Row::Bottom),
-            Position::new(Column::MiddleSecond, Row::Bottom),
-            Position::new(Column::MiddleThird, Row::Bottom),
-            Position::new(Column::RightEdge, Row::Bottom),
-        ]
-        .into_iter()
-        .fold(BTreeSet::new(), |mut acc, position| {
-            acc.insert(position);
-            acc
-        })
-    );
-    let (position, mut cell) = board
-        .cell_map
-        .remove_entry(&left_edge_top_position)
-        .unwrap();
-    cell.pallet[1] = Some(player_b.clone());
-    board.cell_map.insert(position, cell);
-    assert_eq!(
-        board.player_positions(&player_a),
-        vec![
-            Position::new(Column::MiddleFirst, Row::Top),
-            Position::new(Column::MiddleSecond, Row::Top),
-            Position::new(Column::MiddleThird, Row::Top),
-            Position::new(Column::RightEdge, Row::Top),
-        ]
-        .into_iter()
-        .fold(BTreeSet::new(), |mut acc, position| {
-            acc.insert(position);
-            acc
-        })
-    );
-    assert_eq!(
-        board.player_positions(&player_b),
-        vec![
-            left_edge_top_position.clone(),
-            Position::new(Column::LeftEdge, Row::Bottom),
-            Position::new(Column::MiddleFirst, Row::Bottom),
-            Position::new(Column::MiddleSecond, Row::Bottom),
-            Position::new(Column::MiddleThird, Row::Bottom),
-            Position::new(Column::RightEdge, Row::Bottom),
-        ]
-        .into_iter()
-        .fold(BTreeSet::new(), |mut acc, position| {
-            acc.insert(position);
-            acc
-        })
-    );
-}
-
 #[cfg(test)]
 mod moving_range_spec {
-    use super::{MovingRange, Board};
+    use super::{Field, MovingRange};
     use crate::{
-        player::Player,
         cell::Cell,
-        position::{Position, Row, Column},
+        player::Player,
+        position::{Column, Position, Row},
     };
 
     #[test]
-    fn corner() {
+    fn new() {
         let player_a = Player::new();
         let player_b = Player::new();
-        let board = Board::new(&player_a, &player_b);
-        let left_top_corner = Position::new(Column::LeftEdge, Row::Top);
-        assert_eq!(board.detect_moving_range(&left_top_corner), MovingRange {
-            up: None,
-            down: Some(Cell::new_empty()),
-            right: Some(Cell::new_occupied(player_a.clone())),
-            left: None,
-            up_right: None,
-            down_right: Some(Cell::new_empty()),
-            up_left: None,
-            down_left: None,
-            pivot: Cell::new_occupied(player_a.clone()),
+        let pivot_position = Position::new(Column::LeftEdge, Row::MiddleSecond);
+        let pivot_cell = Cell::new_occupied(pivot_position.clone(), player_a.clone());
+        let opponents_position = pivot_position.move_up().unwrap();
+        let opponents_cell = Cell::new_occupied(opponents_position.clone(), player_b.clone());
+        let owned_position = pivot_position.move_down().unwrap();
+        let owned_cell = Cell::new_occupied(owned_position.clone(), player_a.clone());
+        let robbed_position = pivot_position.move_right().unwrap();
+        let robbed_cell = Cell::new_occupied(robbed_position.clone(), player_a.clone())
+            .stack(&player_b)
+            .unwrap();
+        let fullfilled_position = pivot_position.move_up_right().unwrap();
+        let _fullfilled_cell = Cell::new_occupied(fullfilled_position, player_b.clone())
+            .stack(&player_a)
+            .unwrap()
+            .stack(&player_b)
+            .unwrap();
+        let empty_cell = Cell::new_empty(pivot_position.move_down_right().unwrap());
+        let field = [
+            pivot_cell.clone(),
+            opponents_cell.clone(),
+            owned_cell.clone(),
+            robbed_cell.clone(),
+            empty_cell.clone(),
+        ]
+        .iter()
+        .fold(Field::new(), |mut acc, cell| {
+            acc.insert(cell.clone().position, cell.clone());
+            acc
         });
-
-        let right_top_corner = Position::new(Column::RightEdge, Row::Top);
-        assert_eq!(board.detect_moving_range(&right_top_corner), MovingRange {
-            up: None,
-            down: Some(Cell::new_empty()),
-            right: None,
-            left: Some(Cell::new_occupied(player_a.clone())),
-            up_right: None,
-            down_right: None,
-            up_left: None,
-            down_left: Some(Cell::new_empty()),
-            pivot: Cell::new_occupied(player_a.clone()),
-        });
-
-        let left_bottom_corner = Position::new(Column::LeftEdge, Row::Bottom);
-        assert_eq!(board.detect_moving_range(&left_bottom_corner), MovingRange {
-            up: Some(Cell::new_empty()),
-            down: None,
-            right: Some(Cell::new_occupied(player_b.clone())),
-            left: None,
-            up_right: Some(Cell::new_empty()),
-            down_right: None,
-            up_left: None,
-            down_left: None,
-            pivot: Cell::new_occupied(player_b.clone()),
-        });
-
-        let right_bottom_corner = Position::new(Column::RightEdge, Row::Bottom);
-        assert_eq!(board.detect_moving_range(&right_bottom_corner), MovingRange{
-            up: Some(Cell::new_empty()),
-            down: None,
-            right: None,
-            left: Some(Cell::new_occupied(player_b.clone())),
-            up_right: None,
-            down_right: None,
-            up_left: Some(Cell::new_empty()),
-            down_left: None,
-            pivot: Cell::new_occupied(player_b.clone()),
-        });
+        let result = MovingRange::new(&pivot_cell, &field);
+        assert_eq!(
+            result,
+            MovingRange {
+                up: Some(opponents_cell.clone()),
+                down: None,
+                left: None,
+                right: Some(robbed_cell.clone()),
+                up_right: None,
+                down_right: Some(empty_cell.clone()),
+                up_left: None,
+                down_left: None,
+            }
+        )
     }
 }

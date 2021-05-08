@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use crate::result::{Error, Result};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy)]
 pub(crate) enum Row {
     Top,
     MiddleFirst,
@@ -51,7 +51,7 @@ impl Row {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy)]
 pub(crate) enum Column {
     LeftEdge,
     MiddleFirst,
@@ -96,7 +96,7 @@ impl Column {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash, Clone, PartialOrd, Ord)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone, PartialOrd, Ord, Copy)]
 pub(crate) struct Position {
     x: Column,
     y: Row,
@@ -137,7 +137,7 @@ impl Position {
         self.move_horizon(self.x.move_left())
     }
 
-    pub(crate) fn move_up_right(&self) -> Result<Self>  {
+    pub(crate) fn move_up_right(&self) -> Result<Self> {
         self.move_up().and_then(|p| p.move_right())
     }
 
@@ -472,10 +472,7 @@ fn can_move_up_right() {
         }),
     );
     let right_top_corner = moved_to_right_top_corner.unwrap();
-    assert_eq!(
-        right_top_corner.move_up_right(),
-        Err(Error::ReachedTop),
-    );
+    assert_eq!(right_top_corner.move_up_right(), Err(Error::ReachedTop),);
     assert_eq!(
         Position::new(Column::RightEdge, Row::MiddleFirst).move_up_right(),
         Err(Error::ReachedRightEdge),
@@ -494,10 +491,7 @@ fn can_move_up_left() {
         }),
     );
     let left_top_corner = moved_to_left_top_corner.unwrap();
-    assert_eq!(
-        left_top_corner.move_up_left(),
-        Err(Error::ReachedTop),
-    );
+    assert_eq!(left_top_corner.move_up_left(), Err(Error::ReachedTop),);
     assert_eq!(
         Position::new(Column::LeftEdge, Row::MiddleFirst).move_up_left(),
         Err(Error::ReachedLeftEdge),
