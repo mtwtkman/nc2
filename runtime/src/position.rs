@@ -153,20 +153,28 @@ impl Position {
         self.move_down().and_then(|p| p.move_left())
     }
 
+    pub(crate) fn is_top(&self) -> bool {
+        self.y.is_top()
+    }
+
+    pub(crate) fn is_bottom(&self) -> bool {
+        self.y.is_bottom()
+    }
+
     pub(crate) fn is_left_edge_top(&self) -> bool {
-        self.x.is_left_edge() && self.y.is_top()
+        self.x.is_left_edge() && self.is_top()
     }
 
     pub(crate) fn is_left_edge_bottom(&self) -> bool {
-        self.x.is_left_edge() && self.y.is_bottom()
+        self.x.is_left_edge() && self.is_bottom()
     }
 
     pub(crate) fn is_right_edge_top(&self) -> bool {
-        self.x.is_right_edge() && self.y.is_top()
+        self.x.is_right_edge() && self.is_top()
     }
 
     pub(crate) fn is_right_edge_bottom(&self) -> bool {
-        self.x.is_right_edge() && self.y.is_bottom()
+        self.x.is_right_edge() && self.is_bottom()
     }
 
     pub(crate) fn is_right_edge_middle_row(&self) -> bool {
@@ -178,11 +186,11 @@ impl Position {
     }
 
     pub(crate) fn is_middle_column_top(&self) -> bool {
-        self.x.is_middle() && self.y.is_top()
+        self.x.is_middle() && self.is_top()
     }
 
     pub(crate) fn is_middle_column_bottom(&self) -> bool {
-        self.x.is_middle() && self.y.is_bottom()
+        self.x.is_middle() && self.is_bottom()
     }
 }
 

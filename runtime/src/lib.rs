@@ -7,17 +7,12 @@ mod result;
 use board::{Board, CellMap};
 use cell::Cell;
 use player::Player;
+use position::Row;
 use result::Result;
 
 struct Phase {
     player: Player,
     cell_map: CellMap,
-}
-
-impl Phase {
-    fn is_win(&self) -> bool {
-        unimplemented!()
-    }
 }
 
 pub enum Direction {
@@ -66,6 +61,36 @@ impl Game {
             board,
             current_phase: phase,
         }
+    }
+
+    fn goal_side(&self) -> Row {
+        if &self.current_phase.player == &self.player_a {
+            Row::Bottom
+        } else {
+            Row::Top
+        }
+    }
+
+    fn winner(&self) -> Option<Player> {
+        let goal_side = self.goal_side();
+        if self
+            .current_phase
+            .cell_map
+            .keys()
+            .find(|cell| match &goal_side {
+                Row::Top => cell.position.is_top(),
+                _ => cell.position.is_bottom(),
+            })
+            .is_some()
+        {
+            Some(self.current_phase.player.clone())
+        } else {
+            None
+        }
+    }
+
+    fn is_over(&self) -> bool {
+        self.winner().is_some()
     }
 
     fn spawn_players() -> (Player, Player) {
