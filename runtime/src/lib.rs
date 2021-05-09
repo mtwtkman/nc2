@@ -15,6 +15,18 @@ struct Phase {
     cell_map: CellMap,
 }
 
+impl Phase {
+    fn won(&self, goal_side: &Row) -> bool {
+        self.cell_map
+            .keys()
+            .find(|cell| match goal_side {
+                Row::Top => cell.position.is_top(),
+                _ => cell.position.is_bottom(),
+            })
+            .is_some()
+    }
+}
+
 pub enum Direction {
     Up,
     Down,
@@ -45,6 +57,7 @@ pub struct Game {
     player_b: Player,
     board: Board,
     current_phase: Phase,
+    winner: Option<Player>,
 }
 
 impl Game {
@@ -60,6 +73,7 @@ impl Game {
             player_b,
             board,
             current_phase: phase,
+            winner: None,
         }
     }
 
@@ -71,26 +85,8 @@ impl Game {
         }
     }
 
-    fn winner(&self) -> Option<Player> {
-        let goal_side = self.goal_side();
-        if self
-            .current_phase
-            .cell_map
-            .keys()
-            .find(|cell| match &goal_side {
-                Row::Top => cell.position.is_top(),
-                _ => cell.position.is_bottom(),
-            })
-            .is_some()
-        {
-            Some(self.current_phase.player.clone())
-        } else {
-            None
-        }
-    }
-
     fn is_over(&self) -> bool {
-        self.winner().is_some()
+        self.winner.is_some()
     }
 
     fn spawn_players() -> (Player, Player) {
@@ -104,6 +100,7 @@ impl Game {
             player_b: self.player_b.clone(),
             board,
             current_phase: phase,
+            winner: self.winner.clone(),
         })
     }
 
@@ -114,7 +111,7 @@ impl Game {
 
 //#[test]
 fn play_game() {
-    use crate::position::{Column, Position, Row};
+    use crate::position::{Column, Position};
     let game = Game::new();
     assert_eq!(&game.current_phase.player, &game.player_a);
     let move_from = Cell::new_occupied(
