@@ -20,6 +20,31 @@ impl Phase {
     }
 }
 
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+    UpRight,
+    DownRight,
+    UpLeft,
+    DownLeft,
+}
+
+struct Action {
+    from: Cell,
+    direction: Direction,
+}
+
+impl Action {
+    fn new(departure_cell: Cell, direction: Direction) -> Self {
+        Self {
+            from: departure_cell,
+            direction,
+        }
+    }
+}
+
 pub struct Game {
     player_a: Player,
     player_b: Player,
@@ -47,8 +72,8 @@ impl Game {
         (Player::new(), Player::new())
     }
 
-    fn act(&self, cell: &Cell) -> Result<Self> {
-        let (board, phase) = self.next_turn(cell)?;
+    fn act(&self, action: Action) -> Result<Self> {
+        let (board, phase) = self.next_turn(action)?;
         Ok(Self {
             player_a: self.player_a.clone(),
             player_b: self.player_b.clone(),
@@ -57,12 +82,21 @@ impl Game {
         })
     }
 
-    fn next_turn(&self, cell: &Cell) -> Result<(Board, Phase)> {
+    fn next_turn(&self, action: Action) -> Result<(Board, Phase)> {
         unimplemented!()
     }
 }
 
-#[test]
+//#[test]
 fn play_game() {
+    use crate::position::{Column, Position, Row};
     let game = Game::new();
+    assert_eq!(&game.current_phase.player, &game.player_a);
+    let move_from = Cell::new_occupied(
+        Position::new(Column::LeftEdge, Row::Top),
+        game.current_phase.player.clone(),
+    );
+    let first_action = Action::new(move_from, Direction::Down);
+    let result = game.act(first_action);
+    assert!(result.is_ok());
 }

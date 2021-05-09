@@ -104,14 +104,14 @@ impl Board {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub(crate) struct MovingRange {
-    up: Option<Cell>,
-    down: Option<Cell>,
-    right: Option<Cell>,
-    left: Option<Cell>,
-    up_right: Option<Cell>,
-    down_right: Option<Cell>,
-    up_left: Option<Cell>,
-    down_left: Option<Cell>,
+    pub(crate) up: Option<Cell>,
+    pub(crate) down: Option<Cell>,
+    pub(crate) right: Option<Cell>,
+    pub(crate) left: Option<Cell>,
+    pub(crate) up_right: Option<Cell>,
+    pub(crate) down_right: Option<Cell>,
+    pub(crate) up_left: Option<Cell>,
+    pub(crate) down_left: Option<Cell>,
 }
 
 impl MovingRange {
