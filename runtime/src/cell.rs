@@ -6,7 +6,7 @@ use crate::{
 
 pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
-#[derive(Debug, Hash, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Copy, PartialOrd, Ord)]
 pub(crate) struct Cell {
     pub(crate) position: Position,
     pub(crate) pallet: [Option<Player>; PALLET_HEIGHT_LIMIT],

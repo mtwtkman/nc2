@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashMap;
 
 use crate::{
     cell::Cell,
@@ -8,7 +8,7 @@ use crate::{
 };
 
 type Field = HashMap<Position, Cell>;
-type CellMap = HashMap<Cell, MovingRange>;
+pub(crate) type CellMap = HashMap<Cell, MovingRange>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Board {
@@ -88,13 +88,13 @@ impl Board {
         })
     }
 
-    fn player_positions(&self, player: &Player) -> BTreeSet<Position> {
+    pub(crate) fn territory(&self, player: &Player) -> CellMap {
         self.cell_map
             .iter()
-            .fold(BTreeSet::new(), |mut acc, (cell, _)| {
+            .fold(CellMap::new(), |mut acc, (cell, moving_range)| {
                 if let Some(owner) = cell.owner() {
                     if owner == player.clone() {
-                        acc.insert(cell.position.clone());
+                        acc.insert(cell.clone(), moving_range.clone());
                     }
                 }
                 acc
@@ -102,8 +102,8 @@ impl Board {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
-struct MovingRange {
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub(crate) struct MovingRange {
     up: Option<Cell>,
     down: Option<Cell>,
     right: Option<Cell>,
