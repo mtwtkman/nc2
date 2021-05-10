@@ -27,27 +27,16 @@ impl Phase {
     }
 }
 
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
-    UpRight,
-    DownRight,
-    UpLeft,
-    DownLeft,
-}
-
 struct Action {
     from: Cell,
-    direction: Direction,
+    to: Cell,
 }
 
 impl Action {
-    fn new(departure_cell: Cell, direction: Direction) -> Self {
+    fn new(from: Cell, to: Cell) -> Self {
         Self {
-            from: departure_cell,
-            direction,
+            from,
+            to,
         }
     }
 }
@@ -109,16 +98,47 @@ impl Game {
     }
 }
 
-//#[test]
-fn play_game() {
-    use crate::position::{Column, Position};
-    let game = Game::new();
-    assert_eq!(&game.current_phase.player, &game.player_a);
-    let move_from = Cell::new_occupied(
-        Position::new(Column::LeftEdge, Row::Top),
-        game.current_phase.player.clone(),
-    );
-    let first_action = Action::new(move_from, Direction::Down);
-    let result = game.act(first_action);
-    assert!(result.is_ok());
+// #[test]
+// fn play_game() {
+//     use crate::position::{Column, Position};
+//     let game = Game::new();
+//     assert_eq!(&game.current_phase.player, &game.player_a);
+//     let move_from = Cell::new_occupied(
+//         Position::new(Column::LeftEdge, Row::Top),
+//         game.current_phase.player.clone(),
+//     );
+//     let first_action = Action::new(move_from, Direction::Down);
+//     let result = game.act(first_action);
+//     assert!(result.is_ok());
+// }
+
+#[cfg(test)]
+mod phase_spec {
+    use super::Phase;
+    use crate::{
+        player::Player,
+        board::{CellMap, MovingRange},
+        cell::Cell,
+        position::{Position, Column, Row},
+    };
+
+    #[test]
+    fn won() {
+        let player = Player::new();
+        for goal_side in [Row::Top, Row::Bottom].iter() {
+            let mut cell_map: CellMap = CellMap::new();
+            cell_map.insert(
+                Cell::new_occupied(
+            Position::new(Column::LeftEdge, goal_side.clone()),
+                    player.clone(),
+                ),
+                MovingRange::default(),
+            );
+            let phase = Phase {
+                player,
+                cell_map,
+            };
+            assert!(phase.won(goal_side));
+        }
+    }
 }

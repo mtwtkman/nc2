@@ -114,6 +114,22 @@ pub(crate) struct MovingRange {
     pub(crate) down_left: Option<Cell>,
 }
 
+#[cfg(test)]
+impl Default for MovingRange {
+    fn default() -> Self {
+        MovingRange {
+            up: None,
+            down: None,
+            right: None,
+            left: None,
+            up_right: None,
+            down_right: None,
+            up_left: None,
+            down_left: None,
+        }
+    }
+}
+
 impl MovingRange {
     fn new(cell: &Cell, field: &Field) -> Self {
         Self {
