@@ -4,11 +4,11 @@ mod player;
 mod position;
 mod result;
 
-use board::{Board, CellMap};
+use board::{Board, CellMap, Direction};
 use cell::Cell;
 use player::Player;
 use position::Row;
-use result::Result;
+use result::{Error, Result};
 
 struct Phase {
     player: Player,
@@ -29,14 +29,14 @@ impl Phase {
 
 struct Action {
     from: Cell,
-    to: Cell,
+    to_direction: Direction,
 }
 
 impl Action {
-    fn new(from: Cell, to: Cell) -> Self {
+    fn new(from: Cell, direction: Direction) -> Self {
         Self {
             from,
-            to,
+            to_direction: direction,
         }
     }
 }
@@ -93,24 +93,22 @@ impl Game {
         })
     }
 
+    fn next_player(&self) -> Player {
+        if self.current_phase.player == self.player_a {
+            self.player_b.clone()
+        } else {
+            self.player_a.clone()
+        }
+    }
+
     fn next_turn(&self, action: Action) -> Result<(Board, Phase)> {
+        let moving_range = self.board.cell_map
+            .get(&action.from)
+            .ok_or(Error::InvalidDirection)?;
+        let destination = moving_range.indicate(&action.to_direction)?;
         unimplemented!()
     }
 }
-
-// #[test]
-// fn play_game() {
-//     use crate::position::{Column, Position};
-//     let game = Game::new();
-//     assert_eq!(&game.current_phase.player, &game.player_a);
-//     let move_from = Cell::new_occupied(
-//         Position::new(Column::LeftEdge, Row::Top),
-//         game.current_phase.player.clone(),
-//     );
-//     let first_action = Action::new(move_from, Direction::Down);
-//     let result = game.act(first_action);
-//     assert!(result.is_ok());
-// }
 
 #[cfg(test)]
 mod phase_spec {

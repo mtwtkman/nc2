@@ -9,6 +9,8 @@ pub(crate) enum Error {
     ReachedPalletHeightLimit,
     PalletIsEmpty,
     AlreadyOccupied(Player),
+    InvalidDirection,
+    IllegalDestination,
 }
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;

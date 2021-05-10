@@ -4,7 +4,7 @@ use crate::{
     cell::Cell,
     player::Player,
     position::{Column, Position, Row},
-    result::Result,
+    result::{Error, Result},
 };
 
 type Field = HashMap<Position, Cell>;
@@ -12,7 +12,7 @@ pub(crate) type CellMap = HashMap<Cell, MovingRange>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Board {
-    cell_map: CellMap,
+    pub(crate) cell_map: CellMap,
 }
 impl Board {
     pub(crate) fn new(player_a: &Player, player_b: &Player) -> Self {
@@ -114,6 +114,17 @@ pub(crate) struct MovingRange {
     pub(crate) down_left: Option<Cell>,
 }
 
+pub(crate) enum Direction {
+    Up,
+    Down,
+    Right,
+    Left,
+    UpRight,
+    DownRight,
+    UpLeft,
+    DownLeft,
+}
+
 #[cfg(test)]
 impl Default for MovingRange {
     fn default() -> Self {
@@ -164,6 +175,20 @@ impl MovingRange {
 
     fn is_reached_stacking_limit(to_cell: &Cell) -> bool {
         to_cell.is_fullfilled()
+    }
+
+    pub(crate) fn indicate(&self, direction: &Direction) -> Result<Cell> {
+        let x = match direction {
+            Direction::Up => self.up,
+            Direction::Down => self.down,
+            Direction::Right => self.right,
+            Direction::Left => self.left,
+            Direction::UpRight => self.up_right,
+            Direction::DownRight => self.down_right,
+            Direction::UpLeft => self.up_left,
+            Direction::DownLeft => self.down_left,
+        };
+        x.ok_or(Error::IllegalDestination)
     }
 }
 
@@ -227,7 +252,7 @@ fn generate_initial_empty_cells() {
 
 #[cfg(test)]
 mod moving_range_spec {
-    use super::{Field, MovingRange};
+    use super::{Field, MovingRange, Direction};
     use crate::{
         cell::Cell,
         player::Player,
@@ -281,5 +306,49 @@ mod moving_range_spec {
                 down_left: None,
             }
         )
+    }
+
+    #[test]
+    fn has() {
+        let cell = Cell::new_empty(Position::new(Column::LeftEdge, Row::Top));
+        let mr = MovingRange {
+            up: Some(cell.clone()),
+            down: Some(cell.clone()),
+            right: Some(cell.clone()),
+            left: Some(cell.clone()),
+            up_right: Some(cell.clone()),
+            down_right: Some(cell.clone()),
+            up_left: Some(cell.clone()),
+            down_left: Some(cell.clone()),
+        };
+        for direction in [
+            Direction::Up,
+            Direction::Down,
+            Direction::Right,
+            Direction::Left,
+            Direction::UpRight,
+            Direction::DownLeft,
+            Direction::UpLeft,
+            Direction::DownLeft,
+        ].iter() {
+            assert!(mr.indicate(direction).is_ok());
+        }
+    }
+
+    fn has_no() {
+        let cell = Cell::new_empty(Position::new(Column::LeftEdge, Row::Top));
+        let mr = MovingRange::default();
+        for direction in [
+            Direction::Up,
+            Direction::Down,
+            Direction::Right,
+            Direction::Left,
+            Direction::UpRight,
+            Direction::DownLeft,
+            Direction::UpLeft,
+            Direction::DownLeft,
+        ].iter() {
+            assert!(mr.indicate(direction).is_err());
+        }
     }
 }
