@@ -327,7 +327,7 @@ mod moving_range_spec {
             Direction::Right,
             Direction::Left,
             Direction::UpRight,
-            Direction::DownLeft,
+            Direction::DownRight,
             Direction::UpLeft,
             Direction::DownLeft,
         ].iter() {
@@ -344,7 +344,7 @@ mod moving_range_spec {
             Direction::Right,
             Direction::Left,
             Direction::UpRight,
-            Direction::DownLeft,
+            Direction::DownRight,
             Direction::UpLeft,
             Direction::DownLeft,
         ].iter() {
