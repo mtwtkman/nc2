@@ -141,4 +141,24 @@ mod phase_spec {
             assert!(phase.won(goal_side));
         }
     }
+
+    #[test]
+    fn not_won() {
+        let player = Player::new();
+        for goal_side in [Row::Top, Row::Bottom].iter() {
+            let mut cell_map  = CellMap::new();
+            cell_map.insert(
+                Cell::new_occupied(
+                    Position::new(Column::LeftEdge, Row::MiddleFirst),
+                    player.clone(),
+                ),
+                MovingRange::default(),
+            );
+            let phase = Phase {
+                player,
+                cell_map,
+            };
+            assert!(!phase.won(goal_side));
+        }
+    }
 }
