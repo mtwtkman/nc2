@@ -8,8 +8,8 @@ pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct MigratedCellPair {
-    from: Cell,
-    to: Cell,
+    pub(crate) from: Cell,
+    pub(crate) to: Cell,
 }
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Copy, PartialOrd, Ord)]
