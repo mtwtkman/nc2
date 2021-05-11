@@ -102,7 +102,9 @@ impl Game {
     }
 
     fn next_turn(&self, action: Action) -> Result<(Board, Phase)> {
-        let moving_range = self.board.cell_map
+        let moving_range = self
+            .board
+            .cell_map
             .get(&action.from)
             .ok_or(Error::InvalidDirection)?;
         let destination = moving_range.indicate(&action.to_direction)?;
@@ -114,10 +116,10 @@ impl Game {
 mod phase_spec {
     use super::Phase;
     use crate::{
-        player::Player,
         board::{CellMap, MovingRange},
         cell::Cell,
-        position::{Position, Column, Row},
+        player::Player,
+        position::{Column, Position, Row},
     };
 
     #[test]
@@ -127,15 +129,12 @@ mod phase_spec {
             let mut cell_map: CellMap = CellMap::new();
             cell_map.insert(
                 Cell::new_occupied(
-            Position::new(Column::LeftEdge, goal_side.clone()),
+                    Position::new(Column::LeftEdge, goal_side.clone()),
                     player.clone(),
                 ),
                 MovingRange::default(),
             );
-            let phase = Phase {
-                player,
-                cell_map,
-            };
+            let phase = Phase { player, cell_map };
             assert!(phase.won(goal_side));
         }
     }
@@ -144,7 +143,7 @@ mod phase_spec {
     fn not_won() {
         let player = Player::new();
         for goal_side in [Row::Top, Row::Bottom].iter() {
-            let mut cell_map  = CellMap::new();
+            let mut cell_map = CellMap::new();
             cell_map.insert(
                 Cell::new_occupied(
                     Position::new(Column::LeftEdge, Row::MiddleFirst),
@@ -152,10 +151,7 @@ mod phase_spec {
                 ),
                 MovingRange::default(),
             );
-            let phase = Phase {
-                player,
-                cell_map,
-            };
+            let phase = Phase { player, cell_map };
             assert!(!phase.won(goal_side));
         }
     }

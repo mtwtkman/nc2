@@ -252,7 +252,7 @@ fn generate_initial_empty_cells() {
 
 #[cfg(test)]
 mod moving_range_spec {
-    use super::{Field, MovingRange, Direction};
+    use super::{Direction, Field, MovingRange};
     use crate::{
         cell::Cell,
         player::Player,
@@ -330,7 +330,9 @@ mod moving_range_spec {
             Direction::DownRight,
             Direction::UpLeft,
             Direction::DownLeft,
-        ].iter() {
+        ]
+        .iter()
+        {
             assert!(mr.indicate(direction).is_ok());
         }
     }
@@ -347,7 +349,9 @@ mod moving_range_spec {
             Direction::DownRight,
             Direction::UpLeft,
             Direction::DownLeft,
-        ].iter() {
+        ]
+        .iter()
+        {
             assert!(mr.indicate(direction).is_err());
         }
     }
