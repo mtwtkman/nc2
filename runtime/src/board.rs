@@ -227,8 +227,6 @@ mod board_spec {
 
     #[test]
     fn generate_initial_empty_cells() {
-        use crate::position::Column;
-
         for row in [
             Row::MiddleFirst,
             Row::MiddleSecond,
@@ -255,6 +253,34 @@ mod board_spec {
                 Board::generate_initial_empty_cells(row.clone()).collect::<Vec<(Position, Cell)>>();
             assert_eq!(row, expected_cells);
         }
+    }
+
+    #[test]
+    fn territory() {
+        use std::collections::BTreeSet;
+        let player_a = Player::new();
+        let player_b = Player::new();
+        let board = Board::new(&player_a, &player_b);
+        let player_a_territory = board
+            .territory(&player_a)
+            .keys()
+            .map(|k| k.clone())
+            .collect::<BTreeSet<Cell>>();
+        assert_eq!(
+            player_a_territory,
+            [
+                Column::LeftEdge,
+                Column::MiddleFirst,
+                Column::MiddleSecond,
+                Column::MiddleThird,
+                Column::RightEdge,
+            ]
+            .iter()
+            .map(|col| {
+                Cell::new_occupied(Position::new(col.to_owned(), Row::Top), player_a.clone())
+            })
+            .collect::<BTreeSet<Cell>>(),
+        );
     }
 }
 
