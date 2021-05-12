@@ -5,7 +5,7 @@ mod position;
 mod result;
 
 use board::{Board, CellMap, Direction};
-use cell::Cell;
+use cell::{Cell, MigratedCellPair};
 use player::Player;
 use position::Row;
 use result::{Error, Result};
@@ -108,6 +108,17 @@ impl Game {
             .get(&action.from)
             .ok_or(Error::InvalidDirection)?;
         let destination = moving_range.indicate(&action.to_direction)?;
+        let migration_pair = action.from.migrate(&destination)?;
+        let board = self.remap(&migration_pair);
+        let phase = Phase {
+            player: self.next_player(),
+            cell_map: board.cell_map.clone(),
+        };
+        Ok((board, phase))
+    }
+
+    fn remap(&self, migration_pair: &MigratedCellPair) -> Board {
+        let mut cell_map = self.board.cell_map.clone();
         unimplemented!()
     }
 }
@@ -154,5 +165,22 @@ mod phase_spec {
             let phase = Phase { player, cell_map };
             assert!(!phase.won(goal_side));
         }
+    }
+}
+
+#[cfg(test)]
+mod game_spec {
+    use super::Game;
+
+    #[test]
+    fn initial_state() {
+        let game = Game::new();
+        let initial_phase = &game.current_phase;
+        assert_eq!(initial_phase.player, game.player_a);
+        assert!(!game.is_over());
+        assert_eq!(
+            &initial_phase.cell_map,
+            &game.board.territory(&game.player_a)
+        );
     }
 }

@@ -192,61 +192,69 @@ impl MovingRange {
     }
 }
 
-#[test]
-fn generate_initial_occupied_cells() {
-    use crate::{cell::Cell, position::Column};
+#[cfg(test)]
+mod board_spec {
+    use super::Board;
+    use crate::{
+        cell::Cell,
+        player::Player,
+        position::{Column, Position, Row},
+    };
 
-    for side in [Row::Top, Row::Bottom].iter() {
-        let player = Player::new();
-        let side_row = Board::generate_initial_occupied_cells(player.clone(), side.to_owned())
+    #[test]
+    fn generate_initial_occupied_cells() {
+        for side in [Row::Top, Row::Bottom].iter() {
+            let player = Player::new();
+            let side_row = Board::generate_initial_occupied_cells(player.clone(), side.to_owned())
+                .collect::<Vec<(Position, Cell)>>();
+            let expected_cells = [
+                Column::LeftEdge,
+                Column::MiddleFirst,
+                Column::MiddleSecond,
+                Column::MiddleThird,
+                Column::RightEdge,
+            ]
+            .iter()
+            .map(|column| {
+                let position = Position::new(column.to_owned(), side.to_owned());
+                let cell = Cell::new_occupied(position.clone(), player.clone());
+                (position, cell)
+            })
             .collect::<Vec<(Position, Cell)>>();
-        let expected_cells = [
-            Column::LeftEdge,
-            Column::MiddleFirst,
-            Column::MiddleSecond,
-            Column::MiddleThird,
-            Column::RightEdge,
-        ]
-        .iter()
-        .map(|column| {
-            let position = Position::new(column.to_owned(), side.to_owned());
-            let cell = Cell::new_occupied(position.clone(), player.clone());
-            (position, cell)
-        })
-        .collect::<Vec<(Position, Cell)>>();
-        assert_eq!(side_row, expected_cells);
+            assert_eq!(side_row, expected_cells);
+        }
     }
-}
 
-#[test]
-fn generate_initial_empty_cells() {
-    use crate::position::Column;
+    #[test]
+    fn generate_initial_empty_cells() {
+        use crate::position::Column;
 
-    for row in [
-        Row::MiddleFirst,
-        Row::MiddleSecond,
-        Row::MiddleThird,
-        Row::MiddleFourth,
-    ]
-    .iter()
-    {
-        let expected_cells = [
-            Column::LeftEdge,
-            Column::MiddleFirst,
-            Column::MiddleSecond,
-            Column::MiddleThird,
-            Column::RightEdge,
+        for row in [
+            Row::MiddleFirst,
+            Row::MiddleSecond,
+            Row::MiddleThird,
+            Row::MiddleFourth,
         ]
         .iter()
-        .map(move |column| {
-            let position = Position::new(column.to_owned(), row.to_owned());
-            let cell = Cell::new_empty(position.clone());
-            (position, cell)
-        })
-        .collect::<Vec<(Position, Cell)>>();
-        let row =
-            Board::generate_initial_empty_cells(row.clone()).collect::<Vec<(Position, Cell)>>();
-        assert_eq!(row, expected_cells);
+        {
+            let expected_cells = [
+                Column::LeftEdge,
+                Column::MiddleFirst,
+                Column::MiddleSecond,
+                Column::MiddleThird,
+                Column::RightEdge,
+            ]
+            .iter()
+            .map(move |column| {
+                let position = Position::new(column.to_owned(), row.to_owned());
+                let cell = Cell::new_empty(position.clone());
+                (position, cell)
+            })
+            .collect::<Vec<(Position, Cell)>>();
+            let row =
+                Board::generate_initial_empty_cells(row.clone()).collect::<Vec<(Position, Cell)>>();
+            assert_eq!(row, expected_cells);
+        }
     }
 }
 
@@ -337,8 +345,8 @@ mod moving_range_spec {
         }
     }
 
+    #[test]
     fn has_no() {
-        let cell = Cell::new_empty(Position::new(Column::LeftEdge, Row::Top));
         let mr = MovingRange::default();
         for direction in [
             Direction::Up,
