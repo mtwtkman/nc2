@@ -156,14 +156,14 @@ pub(crate) enum Direction {
 impl MovingRange {
     fn new(cell: &Cell, field: &Field) -> Self {
         Self {
-            up: Self::destination(cell, cell.position.move_up(), field),
-            down: Self::destination(cell, cell.position.move_down(), field),
-            left: Self::destination(cell, cell.position.move_left(), field),
-            right: Self::destination(cell, cell.position.move_right(), field),
-            up_right: Self::destination(cell, cell.position.move_up_right(), field),
-            down_right: Self::destination(cell, cell.position.move_down_right(), field),
-            up_left: Self::destination(cell, cell.position.move_up_left(), field),
-            down_left: Self::destination(cell, cell.position.move_down_left(), field),
+            up: Self::destination(cell, cell.position.above(), field),
+            down: Self::destination(cell, cell.position.below(), field),
+            left: Self::destination(cell, cell.position.lefthand(), field),
+            right: Self::destination(cell, cell.position.righthand(), field),
+            up_right: Self::destination(cell, cell.position.above_righthand(), field),
+            down_right: Self::destination(cell, cell.position.below_righthand(), field),
+            up_left: Self::destination(cell, cell.position.above_lefthand(), field),
+            down_left: Self::destination(cell, cell.position.below_lefthand(), field),
         }
     }
 
@@ -331,21 +331,21 @@ mod moving_range_spec {
         let player_b = Player::new();
         let pivot_position = Position::new(Column::LeftEdge, Row::MiddleSecond);
         let pivot_cell = Cell::new_occupied(pivot_position.clone(), player_a.clone());
-        let opponents_position = pivot_position.move_up().unwrap();
+        let opponents_position = pivot_position.above().unwrap();
         let opponents_cell = Cell::new_occupied(opponents_position.clone(), player_b.clone());
-        let owned_position = pivot_position.move_down().unwrap();
+        let owned_position = pivot_position.below().unwrap();
         let owned_cell = Cell::new_occupied(owned_position.clone(), player_a.clone());
-        let robbed_position = pivot_position.move_right().unwrap();
+        let robbed_position = pivot_position.righthand().unwrap();
         let robbed_cell = Cell::new_occupied(robbed_position.clone(), player_a.clone())
             .stack(&player_b)
             .unwrap();
-        let fullfilled_position = pivot_position.move_up_right().unwrap();
+        let fullfilled_position = pivot_position.above_righthand().unwrap();
         let fullfilled_cell = Cell::new_occupied(fullfilled_position, player_b.clone())
             .stack(&player_a)
             .unwrap()
             .stack(&player_b)
             .unwrap();
-        let empty_cell = Cell::new_empty(pivot_position.move_down_right().unwrap());
+        let empty_cell = Cell::new_empty(pivot_position.below_righthand().unwrap());
         let field = [
             pivot_cell.clone(),
             opponents_cell.clone(),

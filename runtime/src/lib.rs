@@ -82,7 +82,7 @@ impl Game {
         (Player::new(), Player::new())
     }
 
-    fn act(&self, action: Action) -> Result<Self> {
+    fn accept(&self, action: Action) -> Result<Self> {
         let (board, phase) = self.next_turn(action)?;
         Ok(Self {
             player_a: self.player_a.clone(),
@@ -203,7 +203,7 @@ mod game_spec {
         );
     }
 
-    //#[test]
+    #[test]
     fn flip_turn() {
         let game = Game::new();
         let current_phase = game.current_phase;
