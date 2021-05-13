@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::iter::FromIterator;
 
 use crate::{
     cell::Cell,
@@ -102,18 +103,45 @@ impl Board {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub(crate) struct MovingRange {
-    pub(crate) up: Option<Cell>,
-    pub(crate) down: Option<Cell>,
-    pub(crate) right: Option<Cell>,
-    pub(crate) left: Option<Cell>,
-    pub(crate) up_right: Option<Cell>,
-    pub(crate) down_right: Option<Cell>,
-    pub(crate) up_left: Option<Cell>,
-    pub(crate) down_left: Option<Cell>,
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub(crate) enum DestinationState {
+    Moveable(Cell),
+    Fullfilled(Cell),
+    AlreadyOwned(Cell),
+    OutOfField,
 }
 
+impl DestinationState {
+    pub(crate) fn is_moveable(&self) -> bool {
+        match self {
+            Self::Moveable(_) => true,
+            _ => false,
+        }
+    }
+
+    pub(crate) fn reveal(&self) -> Option<Cell> {
+        match self {
+            Self::Moveable(cell) => Some(cell.clone()),
+            Self::Fullfilled(cell) => Some(cell.clone()),
+            Self::AlreadyOwned(cell) => Some(cell.clone()),
+            Self::OutOfField => None,
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub(crate) struct MovingRange {
+    pub(crate) up: DestinationState,
+    pub(crate) down: DestinationState,
+    pub(crate) right: DestinationState,
+    pub(crate) left: DestinationState,
+    pub(crate) up_right: DestinationState,
+    pub(crate) down_right: DestinationState,
+    pub(crate) up_left: DestinationState,
+    pub(crate) down_left: DestinationState,
+}
+
+#[derive(Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub(crate) enum Direction {
     Up,
     Down,
@@ -123,22 +151,6 @@ pub(crate) enum Direction {
     DownRight,
     UpLeft,
     DownLeft,
-}
-
-#[cfg(test)]
-impl Default for MovingRange {
-    fn default() -> Self {
-        MovingRange {
-            up: None,
-            down: None,
-            right: None,
-            left: None,
-            up_right: None,
-            down_right: None,
-            up_left: None,
-            down_left: None,
-        }
-    }
 }
 
 impl MovingRange {
@@ -155,22 +167,22 @@ impl MovingRange {
         }
     }
 
-    fn destination(pivot: &Cell, moved: Result<Position>, field: &Field) -> Option<Cell> {
-        moved.ok().and_then(|dest| {
-            if let Some(cell) = field.get(&dest) {
-                if Self::is_not_owned(pivot, cell) && !Self::is_reached_stacking_limit(cell) {
-                    Some(cell.clone())
-                } else {
-                    None
-                }
+    fn destination(pivot: &Cell, moved: Result<Position>, field: &Field) -> DestinationState {
+        if moved.is_err() {
+            return DestinationState::OutOfField;
+        }
+        let dest_position = moved.unwrap();
+        if let Some(dest_cell) = field.get(&dest_position) {
+            if Self::is_reached_stacking_limit(dest_cell) {
+                DestinationState::Fullfilled(dest_cell.clone())
+            } else if pivot.is_same_owner(dest_cell) {
+                DestinationState::AlreadyOwned(dest_cell.clone())
             } else {
-                None
+                DestinationState::Moveable(dest_cell.clone())
             }
-        })
-    }
-
-    fn is_not_owned(from_cell: &Cell, to_cell: &Cell) -> bool {
-        from_cell.owner() != to_cell.owner()
+        } else {
+            DestinationState::OutOfField
+        }
     }
 
     fn is_reached_stacking_limit(to_cell: &Cell) -> bool {
@@ -188,7 +200,25 @@ impl MovingRange {
             Direction::UpLeft => self.up_left,
             Direction::DownLeft => self.down_left,
         };
-        x.ok_or(Error::IllegalDestination)
+        x.reveal().ok_or(Error::IllegalDestination)
+    }
+
+    pub(crate) fn moveable_directions(&self) -> BTreeSet<Direction> {
+        BTreeSet::from_iter(
+            vec![
+                (self.up, Direction::Up),
+                (self.down, Direction::Down),
+                (self.right, Direction::Right),
+                (self.left, Direction::Left),
+                (self.up_right, Direction::UpRight),
+                (self.down_right, Direction::DownRight),
+                (self.up_left, Direction::UpLeft),
+                (self.down_left, Direction::DownLeft),
+            ]
+            .into_iter()
+            .filter(|(dest, _)| dest.is_moveable())
+            .map(|(_, direction)| direction),
+        )
     }
 }
 
@@ -286,7 +316,9 @@ mod board_spec {
 
 #[cfg(test)]
 mod moving_range_spec {
-    use super::{Direction, Field, MovingRange};
+    use std::collections::BTreeSet;
+
+    use super::{DestinationState, Direction, Field, MovingRange};
     use crate::{
         cell::Cell,
         player::Player,
@@ -308,7 +340,7 @@ mod moving_range_spec {
             .stack(&player_b)
             .unwrap();
         let fullfilled_position = pivot_position.move_up_right().unwrap();
-        let _fullfilled_cell = Cell::new_occupied(fullfilled_position, player_b.clone())
+        let fullfilled_cell = Cell::new_occupied(fullfilled_position, player_b.clone())
             .stack(&player_a)
             .unwrap()
             .stack(&player_b)
@@ -320,6 +352,7 @@ mod moving_range_spec {
             owned_cell.clone(),
             robbed_cell.clone(),
             empty_cell.clone(),
+            fullfilled_cell.clone(),
         ]
         .iter()
         .fold(Field::new(), |mut acc, cell| {
@@ -330,14 +363,14 @@ mod moving_range_spec {
         assert_eq!(
             result,
             MovingRange {
-                up: Some(opponents_cell.clone()),
-                down: None,
-                left: None,
-                right: Some(robbed_cell.clone()),
-                up_right: None,
-                down_right: Some(empty_cell.clone()),
-                up_left: None,
-                down_left: None,
+                up: DestinationState::Moveable(opponents_cell.clone()),
+                down: DestinationState::AlreadyOwned(owned_cell.clone()),
+                left: DestinationState::OutOfField,
+                right: DestinationState::Moveable(robbed_cell.clone()),
+                up_right: DestinationState::Fullfilled(fullfilled_cell.clone()),
+                down_right: DestinationState::Moveable(empty_cell.clone()),
+                up_left: DestinationState::OutOfField,
+                down_left: DestinationState::OutOfField,
             }
         )
     }
@@ -346,14 +379,14 @@ mod moving_range_spec {
     fn has() {
         let cell = Cell::new_empty(Position::new(Column::LeftEdge, Row::Top));
         let mr = MovingRange {
-            up: Some(cell.clone()),
-            down: Some(cell.clone()),
-            right: Some(cell.clone()),
-            left: Some(cell.clone()),
-            up_right: Some(cell.clone()),
-            down_right: Some(cell.clone()),
-            up_left: Some(cell.clone()),
-            down_left: Some(cell.clone()),
+            up: DestinationState::Moveable(cell.clone()),
+            down: DestinationState::Moveable(cell.clone()),
+            right: DestinationState::Moveable(cell.clone()),
+            left: DestinationState::Moveable(cell.clone()),
+            up_right: DestinationState::Moveable(cell.clone()),
+            down_right: DestinationState::Moveable(cell.clone()),
+            up_left: DestinationState::Moveable(cell.clone()),
+            down_left: DestinationState::Moveable(cell.clone()),
         };
         for direction in [
             Direction::Up,
@@ -373,7 +406,16 @@ mod moving_range_spec {
 
     #[test]
     fn has_no() {
-        let mr = MovingRange::default();
+        let mr = MovingRange {
+            up: DestinationState::OutOfField,
+            down: DestinationState::OutOfField,
+            right: DestinationState::OutOfField,
+            left: DestinationState::OutOfField,
+            up_right: DestinationState::OutOfField,
+            down_right: DestinationState::OutOfField,
+            up_left: DestinationState::OutOfField,
+            down_left: DestinationState::OutOfField,
+        };
         for direction in [
             Direction::Up,
             Direction::Down,
@@ -388,5 +430,47 @@ mod moving_range_spec {
         {
             assert!(mr.indicate(direction).is_err());
         }
+    }
+
+    #[test]
+    fn moveable_directions() {
+        use std::iter::FromIterator;
+
+        let player = Player::new();
+        let cell = Cell::new_occupied(
+            Position::new(Column::MiddleFirst, Row::MiddleFirst),
+            player.clone(),
+        );
+        let mut field = [
+            Position::new(Column::LeftEdge, Row::Top),
+            Position::new(Column::MiddleFirst, Row::Top),
+            Position::new(Column::MiddleSecond, Row::Top),
+            Position::new(Column::LeftEdge, Row::MiddleFirst),
+            Position::new(Column::MiddleSecond, Row::MiddleFirst),
+            Position::new(Column::LeftEdge, Row::MiddleSecond),
+            Position::new(Column::MiddleFirst, Row::MiddleSecond),
+            Position::new(Column::MiddleSecond, Row::MiddleSecond),
+        ]
+        .iter()
+        .fold(Field::new(), |mut acc, position| {
+            acc.insert(position.clone(), Cell::new_empty(position.clone()));
+            acc
+        });
+        field.insert(cell.position.clone(), cell.clone());
+        let mr = MovingRange::new(&cell, &field);
+        eprintln!("{:?}", &mr);
+        assert_eq!(
+            mr.moveable_directions(),
+            BTreeSet::from_iter(vec![
+                Direction::Up,
+                Direction::Down,
+                Direction::Left,
+                Direction::Right,
+                Direction::UpRight,
+                Direction::DownRight,
+                Direction::UpLeft,
+                Direction::DownLeft,
+            ])
+        );
     }
 }

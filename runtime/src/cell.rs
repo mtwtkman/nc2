@@ -30,6 +30,10 @@ impl Cell {
         }
     }
 
+    pub(crate) fn is_same_owner(&self, other: &Cell) -> bool {
+        self.owner() == other.owner()
+    }
+
     fn is_empty(&self) -> bool {
         self.height() == 0
     }

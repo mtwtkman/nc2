@@ -127,7 +127,7 @@ impl Game {
 mod phase_spec {
     use super::Phase;
     use crate::{
-        board::{CellMap, MovingRange},
+        board::{CellMap, DestinationState, MovingRange},
         cell::Cell,
         player::Player,
         position::{Column, Position, Row},
@@ -143,7 +143,16 @@ mod phase_spec {
                     Position::new(Column::LeftEdge, goal_side.clone()),
                     player.clone(),
                 ),
-                MovingRange::default(),
+                MovingRange {
+                    up: DestinationState::OutOfField,
+                    down: DestinationState::OutOfField,
+                    right: DestinationState::OutOfField,
+                    left: DestinationState::OutOfField,
+                    up_right: DestinationState::OutOfField,
+                    down_right: DestinationState::OutOfField,
+                    up_left: DestinationState::OutOfField,
+                    down_left: DestinationState::OutOfField,
+                },
             );
             let phase = Phase { player, cell_map };
             assert!(phase.won(goal_side));
@@ -160,7 +169,16 @@ mod phase_spec {
                     Position::new(Column::LeftEdge, Row::MiddleFirst),
                     player.clone(),
                 ),
-                MovingRange::default(),
+                MovingRange {
+                    up: DestinationState::OutOfField,
+                    down: DestinationState::OutOfField,
+                    right: DestinationState::OutOfField,
+                    left: DestinationState::OutOfField,
+                    up_right: DestinationState::OutOfField,
+                    down_right: DestinationState::OutOfField,
+                    up_left: DestinationState::OutOfField,
+                    down_left: DestinationState::OutOfField,
+                },
             );
             let phase = Phase { player, cell_map };
             assert!(!phase.won(goal_side));
@@ -170,7 +188,8 @@ mod phase_spec {
 
 #[cfg(test)]
 mod game_spec {
-    use super::Game;
+    use super::{Action, Direction, Game};
+    use crate::cell::Cell;
 
     #[test]
     fn initial_state() {
@@ -182,5 +201,11 @@ mod game_spec {
             &initial_phase.cell_map,
             &game.board.territory(&game.player_a)
         );
+    }
+
+    //#[test]
+    fn flip_turn() {
+        let game = Game::new();
+        let current_phase = game.current_phase;
     }
 }
