@@ -74,6 +74,10 @@ impl Game {
         }
     }
 
+    fn current_player(&self) -> Player {
+        self.current_phase.player.clone()
+    }
+
     fn is_over(&self) -> bool {
         self.winner.is_some()
     }
