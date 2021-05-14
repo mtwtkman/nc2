@@ -29,14 +29,14 @@ impl Phase {
 
 struct Action {
     from: Cell,
-    to_direction: Direction,
+    direction: Direction,
 }
 
 impl Action {
     fn new(from: Cell, direction: Direction) -> Self {
         Self {
             from,
-            to_direction: direction,
+            direction,
         }
     }
 }
@@ -111,7 +111,7 @@ impl Game {
             .cell_map
             .get(&action.from)
             .ok_or(Error::InvalidDirection)?;
-        let destination = moving_range.indicate(&action.to_direction)?;
+        let destination = moving_range.indicate(&action.direction)?;
         let migration_pair = action.from.migrate(&destination)?;
         let board = self.remap(&migration_pair);
         let phase = Phase {
