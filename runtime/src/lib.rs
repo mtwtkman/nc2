@@ -34,10 +34,7 @@ struct Action {
 
 impl Action {
     fn new(from: Cell, direction: Direction) -> Self {
-        Self {
-            from,
-            direction,
-        }
+        Self { from, direction }
     }
 }
 

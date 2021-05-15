@@ -1,8 +1,8 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap};
 use std::iter::FromIterator;
 
 use crate::{
-    cell::Cell,
+    cell::{Cell, MigratedCellPair},
     player::Player,
     position::{Column, Position, Row},
     result::{Error, Result},
@@ -17,7 +17,8 @@ pub(crate) struct Board {
 }
 impl Board {
     pub(crate) fn new(player_a: &Player, player_b: &Player) -> Self {
-        let cell_map = Self::setup_cell_map(player_a, player_b);
+        let field = Self::build_initial_field(player_a, player_b);
+        let cell_map = Self::setup_cell_map(&field);
         Self { cell_map }
     }
 
@@ -46,8 +47,7 @@ impl Board {
         field
     }
 
-    fn setup_cell_map(player_a: &Player, player_b: &Player) -> CellMap {
-        let field = Self::build_initial_field(player_a, player_b);
+    fn setup_cell_map(field: &Field) -> CellMap {
         field.iter().fold(CellMap::new(), |mut acc, (_, cell)| {
             acc.insert(cell.clone(), MovingRange::new(&cell, &field));
             acc
@@ -100,6 +100,10 @@ impl Board {
                 }
                 acc
             })
+    }
+
+    pub(crate) fn refresh(&self, MigratedCellPair { from, to }: &MigratedCellPair) -> Self {
+        unimplemented!()
     }
 }
 
@@ -224,7 +228,7 @@ impl MovingRange {
 
 #[cfg(test)]
 mod board_spec {
-    use super::Board;
+    use super::{Board, Direction};
     use crate::{
         cell::Cell,
         player::Player,
@@ -288,6 +292,7 @@ mod board_spec {
     #[test]
     fn territory() {
         use std::collections::BTreeSet;
+
         let player_a = Player::new();
         let player_b = Player::new();
         let board = Board::new(&player_a, &player_b);
@@ -311,6 +316,21 @@ mod board_spec {
             })
             .collect::<BTreeSet<Cell>>(),
         );
+    }
+
+    #[test]
+    fn refresh() {
+        let player_a = Player::new();
+        let player_b = Player::new();
+        let board = Board::new(&player_a, &player_b);
+        let from_cell =
+            Cell::new_occupied(Position::new(Column::LeftEdge, Row::Top), player_a.clone());
+        let territory = board.territory(&player_a);
+        let moving_range = territory.get(&from_cell).unwrap();
+        let to_cell = moving_range.indicate(&Direction::Down).unwrap();
+        let migrate_cell_pair = from_cell.migrate(&to_cell).unwrap();
+        // let refreshed = board.refresh(&migrate_cell_pair);
+        // let refreshed_territory = refreshed.territory(&player_a);
     }
 }
 

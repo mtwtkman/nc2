@@ -3,6 +3,7 @@ use crate::{
     position::Position,
     result::{Error, Result},
 };
+use std::hash::{Hash, Hasher};
 
 pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
@@ -12,11 +13,26 @@ pub(crate) struct MigratedCellPair {
     pub(crate) to: Cell,
 }
 
-#[derive(Debug, Hash, Eq, PartialEq, Clone, Copy, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialOrd, Ord)]
 pub(crate) struct Cell {
     pub(crate) position: Position,
     pub(crate) pallet: [Option<Player>; PALLET_HEIGHT_LIMIT],
 }
+
+impl Hash for Cell {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.position.hash(state);
+    }
+}
+
+impl PartialEq for Cell {
+    fn eq(&self, other: &Self) -> bool {
+        self.position == other.position
+    }
+}
+
+impl Eq for Cell {}
+
 impl Cell {
     fn height(&self) -> usize {
         self.pallet.iter().filter(|x| x.is_some()).count()
@@ -252,4 +268,13 @@ mod cell_migrate_spec {
             Err(Error::AlreadyOccupied(player_1.clone()))
         );
     }
+}
+
+#[test]
+fn equality() {
+    let position = Position::new(Column::LeftEdge, Row::Top);
+    let cell = Cell::new_empty(position.clone());
+    let player = Player::new();
+    let same_position = cell.stack(&player).unwrap();
+    assert_eq!(cell, same_position);
 }
