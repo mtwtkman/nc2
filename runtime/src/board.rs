@@ -9,7 +9,7 @@ use crate::{
 };
 
 type Field = HashMap<Position, Cell>;
-pub(crate) type CellMap = HashMap<Cell, MovingRange>;
+pub(crate) type CellMap = HashMap<Position, MovingRange>;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Board {
@@ -20,6 +20,21 @@ impl Board {
         let field = Self::build_initial_field(player_a, player_b);
         let cell_map = Self::setup_cell_map(&field);
         Self { cell_map }
+    }
+
+    fn position_of(&self, cell: &Cell) -> Position {
+        self.cell_map
+            .iter()
+            .fold(
+                HashMap::<Cell, Position>::new(),
+                |mut acc, (position, moving_range)| {
+                    acc.insert(moving_range.pivot.clone(), position.clone());
+                    acc
+                },
+            )
+            .get(cell)
+            .unwrap()
+            .to_owned()
     }
 
     fn build_initial_field(player_a: &Player, player_b: &Player) -> Field {
@@ -48,10 +63,12 @@ impl Board {
     }
 
     fn setup_cell_map(field: &Field) -> CellMap {
-        field.iter().fold(CellMap::new(), |mut acc, (_, cell)| {
-            acc.insert(cell.clone(), MovingRange::new(&cell, &field));
-            acc
-        })
+        field
+            .iter()
+            .fold(CellMap::new(), |mut acc, (position, cell)| {
+                acc.insert(position.clone(), MovingRange::new(position, cell, &field));
+                acc
+            })
     }
 
     fn generate_initial_occupied_cells(
@@ -68,7 +85,7 @@ impl Board {
         .iter()
         .map(move |column| {
             let position = Position::new(column.to_owned(), side.clone());
-            let cell = Cell::new_occupied(position.clone(), player.clone());
+            let cell = Cell::new_occupied(player.clone());
             (position, cell)
         })
     }
@@ -84,7 +101,7 @@ impl Board {
         .iter()
         .map(move |column| {
             let position = Position::new(column.to_owned(), row.clone());
-            let cell = Cell::new_empty(position.clone());
+            let cell = Cell::new_empty();
             (position, cell)
         })
     }
@@ -92,10 +109,11 @@ impl Board {
     pub(crate) fn territory(&self, player: &Player) -> CellMap {
         self.cell_map
             .iter()
-            .fold(CellMap::new(), |mut acc, (cell, moving_range)| {
+            .fold(CellMap::new(), |mut acc, (position, moving_range)| {
+                let cell = moving_range.pivot.clone();
                 if let Some(owner) = cell.owner() {
                     if owner == player.clone() {
-                        acc.insert(cell.clone(), moving_range.clone());
+                        acc.insert(position.clone(), moving_range.clone());
                     }
                 }
                 acc
@@ -135,6 +153,7 @@ impl DestinationState {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub(crate) struct MovingRange {
+    pub(crate) pivot: Cell,
     pub(crate) up: DestinationState,
     pub(crate) down: DestinationState,
     pub(crate) right: DestinationState,
@@ -158,16 +177,17 @@ pub(crate) enum Direction {
 }
 
 impl MovingRange {
-    fn new(cell: &Cell, field: &Field) -> Self {
+    fn new(position: &Position, cell: &Cell, field: &Field) -> Self {
         Self {
-            up: Self::destination(cell, cell.position.above(), field),
-            down: Self::destination(cell, cell.position.below(), field),
-            left: Self::destination(cell, cell.position.lefthand(), field),
-            right: Self::destination(cell, cell.position.righthand(), field),
-            up_right: Self::destination(cell, cell.position.above_righthand(), field),
-            down_right: Self::destination(cell, cell.position.below_righthand(), field),
-            up_left: Self::destination(cell, cell.position.above_lefthand(), field),
-            down_left: Self::destination(cell, cell.position.below_lefthand(), field),
+            pivot: cell.clone(),
+            up: Self::destination(cell, position.above(), field),
+            down: Self::destination(cell, position.below(), field),
+            left: Self::destination(cell, position.lefthand(), field),
+            right: Self::destination(cell, position.righthand(), field),
+            up_right: Self::destination(cell, position.above_righthand(), field),
+            down_right: Self::destination(cell, position.below_righthand(), field),
+            up_left: Self::destination(cell, position.above_lefthand(), field),
+            down_left: Self::destination(cell, position.below_lefthand(), field),
         }
     }
 
@@ -251,7 +271,7 @@ mod board_spec {
             .iter()
             .map(|column| {
                 let position = Position::new(column.to_owned(), side.to_owned());
-                let cell = Cell::new_occupied(position.clone(), player.clone());
+                let cell = Cell::new_occupied(player.clone());
                 (position, cell)
             })
             .collect::<Vec<(Position, Cell)>>();
@@ -279,7 +299,7 @@ mod board_spec {
             .iter()
             .map(move |column| {
                 let position = Position::new(column.to_owned(), row.to_owned());
-                let cell = Cell::new_empty(position.clone());
+                let cell = Cell::new_empty();
                 (position, cell)
             })
             .collect::<Vec<(Position, Cell)>>();
@@ -300,7 +320,7 @@ mod board_spec {
             .territory(&player_a)
             .keys()
             .map(|k| k.clone())
-            .collect::<BTreeSet<Cell>>();
+            .collect::<BTreeSet<Position>>();
         assert_eq!(
             player_a_territory,
             [
@@ -311,10 +331,8 @@ mod board_spec {
                 Column::RightEdge,
             ]
             .iter()
-            .map(|col| {
-                Cell::new_occupied(Position::new(col.to_owned(), Row::Top), player_a.clone())
-            })
-            .collect::<BTreeSet<Cell>>(),
+            .map(|col| { Position::new(col.to_owned(), Row::Top) })
+            .collect::<BTreeSet<Position>>(),
         );
     }
 
@@ -323,10 +341,10 @@ mod board_spec {
         let player_a = Player::new();
         let player_b = Player::new();
         let board = Board::new(&player_a, &player_b);
-        let from_cell =
-            Cell::new_occupied(Position::new(Column::LeftEdge, Row::Top), player_a.clone());
+        let from_cell = Cell::new_occupied(player_a.clone());
         let territory = board.territory(&player_a);
-        let moving_range = territory.get(&from_cell).unwrap();
+        let position = board.position_of(&from_cell);
+        let moving_range = territory.get(&position).unwrap();
         let to_cell = moving_range.indicate(&Direction::Down).unwrap();
         let migrate_cell_pair = from_cell.migrate(&to_cell).unwrap();
         // let refreshed = board.refresh(&migrate_cell_pair);
@@ -350,39 +368,41 @@ mod moving_range_spec {
         let player_a = Player::new();
         let player_b = Player::new();
         let pivot_position = Position::new(Column::LeftEdge, Row::MiddleSecond);
-        let pivot_cell = Cell::new_occupied(pivot_position.clone(), player_a.clone());
+        let pivot_cell = Cell::new_occupied(player_a.clone());
         let opponents_position = pivot_position.above().unwrap();
-        let opponents_cell = Cell::new_occupied(opponents_position.clone(), player_b.clone());
+        let opponents_cell = Cell::new_occupied(player_b.clone());
         let owned_position = pivot_position.below().unwrap();
-        let owned_cell = Cell::new_occupied(owned_position.clone(), player_a.clone());
+        let owned_cell = Cell::new_occupied(player_a.clone());
         let robbed_position = pivot_position.righthand().unwrap();
-        let robbed_cell = Cell::new_occupied(robbed_position.clone(), player_a.clone())
+        let robbed_cell = Cell::new_occupied(player_a.clone())
             .stack(&player_b)
             .unwrap();
         let fullfilled_position = pivot_position.above_righthand().unwrap();
-        let fullfilled_cell = Cell::new_occupied(fullfilled_position, player_b.clone())
+        let fullfilled_cell = Cell::new_occupied(player_b.clone())
             .stack(&player_a)
             .unwrap()
             .stack(&player_b)
             .unwrap();
-        let empty_cell = Cell::new_empty(pivot_position.below_righthand().unwrap());
+        let empty_position = pivot_position.below_righthand().unwrap();
+        let empty_cell = Cell::new_empty();
         let field = [
-            pivot_cell.clone(),
-            opponents_cell.clone(),
-            owned_cell.clone(),
-            robbed_cell.clone(),
-            empty_cell.clone(),
-            fullfilled_cell.clone(),
+            (pivot_position.clone(), pivot_cell.clone()),
+            (opponents_position.clone(), opponents_cell.clone()),
+            (owned_position.clone(), owned_cell.clone()),
+            (robbed_position.clone(), robbed_cell.clone()),
+            (empty_position.clone(), empty_cell.clone()),
+            (fullfilled_position.clone(), fullfilled_cell.clone()),
         ]
         .iter()
-        .fold(Field::new(), |mut acc, cell| {
-            acc.insert(cell.clone().position, cell.clone());
+        .fold(Field::new(), |mut acc, (position, cell)| {
+            acc.insert(position.clone(), cell.clone());
             acc
         });
-        let result = MovingRange::new(&pivot_cell, &field);
+        let result = MovingRange::new(&pivot_position, &pivot_cell, &field);
         assert_eq!(
             result,
             MovingRange {
+                pivot: pivot_cell.clone(),
                 up: DestinationState::Moveable(opponents_cell.clone()),
                 down: DestinationState::AlreadyOwned(owned_cell.clone()),
                 left: DestinationState::OutOfField,
@@ -397,8 +417,9 @@ mod moving_range_spec {
 
     #[test]
     fn has() {
-        let cell = Cell::new_empty(Position::new(Column::LeftEdge, Row::Top));
+        let cell = Cell::new_empty();
         let mr = MovingRange {
+            pivot: cell.clone(),
             up: DestinationState::Moveable(cell.clone()),
             down: DestinationState::Moveable(cell.clone()),
             right: DestinationState::Moveable(cell.clone()),
@@ -427,6 +448,7 @@ mod moving_range_spec {
     #[test]
     fn has_no() {
         let mr = MovingRange {
+            pivot: Cell::new_empty(),
             up: DestinationState::OutOfField,
             down: DestinationState::OutOfField,
             right: DestinationState::OutOfField,
@@ -457,10 +479,8 @@ mod moving_range_spec {
         use std::iter::FromIterator;
 
         let player = Player::new();
-        let cell = Cell::new_occupied(
-            Position::new(Column::MiddleFirst, Row::MiddleFirst),
-            player.clone(),
-        );
+        let pivot_position = Position::new(Column::MiddleFirst, Row::MiddleFirst);
+        let pivot_cell = Cell::new_occupied(player.clone());
         let mut field = [
             Position::new(Column::LeftEdge, Row::Top),
             Position::new(Column::MiddleFirst, Row::Top),
@@ -473,11 +493,11 @@ mod moving_range_spec {
         ]
         .iter()
         .fold(Field::new(), |mut acc, position| {
-            acc.insert(position.clone(), Cell::new_empty(position.clone()));
+            acc.insert(position.clone(), Cell::new_empty());
             acc
         });
-        field.insert(cell.position.clone(), cell.clone());
-        let mr = MovingRange::new(&cell, &field);
+        field.insert(pivot_position.clone(), pivot_cell.clone());
+        let mr = MovingRange::new(&pivot_position, &pivot_cell, &field);
         eprintln!("{:?}", &mr);
         assert_eq!(
             mr.moveable_directions(),

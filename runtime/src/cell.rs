@@ -1,9 +1,7 @@
 use crate::{
     player::Player,
-    position::Position,
     result::{Error, Result},
 };
-use std::hash::{Hash, Hasher};
 
 pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
@@ -13,25 +11,10 @@ pub(crate) struct MigratedCellPair {
     pub(crate) to: Cell,
 }
 
-#[derive(Debug, Clone, Copy, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub(crate) struct Cell {
-    pub(crate) position: Position,
     pub(crate) pallet: [Option<Player>; PALLET_HEIGHT_LIMIT],
 }
-
-impl Hash for Cell {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.position.hash(state);
-    }
-}
-
-impl PartialEq for Cell {
-    fn eq(&self, other: &Self) -> bool {
-        self.position == other.position
-    }
-}
-
-impl Eq for Cell {}
 
 impl Cell {
     fn height(&self) -> usize {
@@ -58,16 +41,14 @@ impl Cell {
         self.height() == PALLET_HEIGHT_LIMIT
     }
 
-    pub(crate) fn new_empty(position: Position) -> Self {
+    pub(crate) fn new_empty() -> Self {
         Self {
-            position,
             pallet: [None; PALLET_HEIGHT_LIMIT],
         }
     }
 
-    pub(crate) fn new_occupied(position: Position, player: Player) -> Self {
+    pub(crate) fn new_occupied(player: Player) -> Self {
         Self {
-            position,
             pallet: [Some(player), None, None],
         }
     }
@@ -83,10 +64,7 @@ impl Cell {
             } else {
                 let mut players = self.pallet.clone();
                 players[height] = Some(player.clone());
-                Ok(Self {
-                    position: self.position.clone(),
-                    pallet: players,
-                })
+                Ok(Self { pallet: players })
             }
         }
     }
@@ -97,10 +75,7 @@ impl Cell {
         } else {
             let mut players = self.pallet.clone();
             players[self.height() - 1] = None;
-            Ok(Self {
-                position: self.position.clone(),
-                pallet: players,
-            })
+            Ok(Self { pallet: players })
         }
     }
 
@@ -121,23 +96,13 @@ impl Cell {
     }
 }
 
-#[cfg(test)]
-fn spawn_player() -> Player {
-    Player::new()
-}
-
-#[cfg(test)]
-use crate::position::{Column, Row};
-
 #[test]
 fn new_occupied() {
-    let player = spawn_player();
-    let position = Position::new(Column::LeftEdge, Row::Top);
-    let cell = Cell::new_occupied(position.clone(), player.clone());
+    let player = Player::new();
+    let cell = Cell::new_occupied(player.clone());
     assert_eq!(
         cell,
         Cell {
-            position,
             pallet: [Some(player.clone()), None, None]
         },
     );
@@ -148,12 +113,10 @@ fn new_occupied() {
 
 #[test]
 fn new_empty() {
-    let position = Position::new(Column::LeftEdge, Row::Top);
-    let cell = Cell::new_empty(position.clone());
+    let cell = Cell::new_empty();
     assert_eq!(
         cell,
         Cell {
-            position,
             pallet: [None; PALLET_HEIGHT_LIMIT],
         },
     );
@@ -163,9 +126,8 @@ fn new_empty() {
 
 #[test]
 fn stack() {
-    let player_1 = spawn_player();
-    let position = Position::new(Column::LeftEdge, Row::Top);
-    let cell = Cell::new_empty(position.clone());
+    let player_1 = Player::new();
+    let cell = Cell::new_empty();
     let first_stacked = cell.stack(&player_1);
     assert!(first_stacked.is_ok());
     let cell_has_one_player = first_stacked.unwrap();
@@ -176,7 +138,7 @@ fn stack() {
     );
     assert_eq!(cell_has_one_player.height(), 1);
     assert_eq!(cell_has_one_player.owner(), Some(player_1.clone()));
-    let player_2 = spawn_player();
+    let player_2 = Player::new();
     let second_stacked = cell_has_one_player.stack(&player_2);
     assert!(second_stacked.is_ok());
     let cell_has_two_players = second_stacked.unwrap();
@@ -185,22 +147,20 @@ fn stack() {
         &[Some(player_1.clone()), Some(player_2.clone()), None]
     );
     let stacking_error = cell_has_two_players
-        .stack(&spawn_player())
+        .stack(&Player::new())
         .unwrap()
-        .stack(&spawn_player());
+        .stack(&Player::new());
     assert_eq!(stacking_error, Err(Error::ReachedPalletHeightLimit));
 }
 
 #[test]
 fn unstack() {
-    let player_1 = spawn_player();
-    let position = Position::new(Column::LeftEdge, Row::Top);
-    let cell = Cell::new_occupied(position.clone(), player_1.clone());
+    let player_1 = Player::new();
+    let cell = Cell::new_occupied(player_1.clone());
     let unstacked = cell.unstack();
     assert_eq!(
         unstacked,
         Ok(Cell {
-            position,
             pallet: [None; PALLET_HEIGHT_LIMIT]
         }),
     );
@@ -211,10 +171,9 @@ fn unstack() {
 
 #[test]
 fn is_reached_stacking_limit() {
-    let player_a = spawn_player();
-    let player_b = spawn_player();
-    let position = Position::new(Column::LeftEdge, Row::Top);
-    let cell = Cell::new_occupied(position, player_a.clone());
+    let player_a = Player::new();
+    let player_b = Player::new();
+    let cell = Cell::new_occupied(player_a.clone());
     assert!(cell
         .stack(&player_b)
         .unwrap()
@@ -225,13 +184,13 @@ fn is_reached_stacking_limit() {
 
 #[cfg(test)]
 mod cell_migrate_spec {
-    use super::{Cell, Column, MigratedCellPair, Player, Position, Row};
+    use super::{Cell, MigratedCellPair, Player};
     use crate::result::Error;
     #[test]
     fn migrate() {
         let player = Player::new();
-        let cell = Cell::new_occupied(Position::new(Column::LeftEdge, Row::Top), player.clone());
-        let other = Cell::new_empty(Position::new(Column::LeftEdge, Row::MiddleFirst));
+        let cell = Cell::new_occupied(player.clone());
+        let other = Cell::new_empty();
         let migrated = cell.migrate(&other);
         let expected = MigratedCellPair {
             from: cell.clone().unstack().unwrap(),
@@ -242,15 +201,15 @@ mod cell_migrate_spec {
 
     #[test]
     fn empty_cell_cannot_migrate() {
-        let cell = Cell::new_empty(Position::new(Column::LeftEdge, Row::Top));
-        let other = Cell::new_empty(Position::new(Column::LeftEdge, Row::MiddleFirst));
+        let cell = Cell::new_empty();
+        let other = Cell::new_empty();
         assert_eq!(cell.migrate(&other), Err(Error::CellIsEmpty));
     }
     #[test]
     fn fullfilled_cell_cannot_migrate() {
         let player_1 = Player::new();
         let player_2 = Player::new();
-        let cell = Cell::new_occupied(Position::new(Column::LeftEdge, Row::Top), player_1.clone());
+        let cell = Cell::new_occupied(player_1.clone());
         let fullfilled = cell.stack(&player_2).unwrap().stack(&player_1).unwrap();
         assert_eq!(cell.migrate(&fullfilled), Err(Error::CellIsFullfilled));
     }
@@ -258,23 +217,11 @@ mod cell_migrate_spec {
     #[test]
     fn already_occupied_cell_cannot_migrate() {
         let player_1 = Player::new();
-        let cell = Cell::new_occupied(Position::new(Column::LeftEdge, Row::Top), player_1.clone());
-        let other = Cell::new_occupied(
-            Position::new(Column::LeftEdge, Row::MiddleFirst),
-            player_1.clone(),
-        );
+        let cell = Cell::new_occupied(player_1.clone());
+        let other = Cell::new_occupied(player_1.clone());
         assert_eq!(
             cell.migrate(&other),
             Err(Error::AlreadyOccupied(player_1.clone()))
         );
     }
-}
-
-#[test]
-fn equality() {
-    let position = Position::new(Column::LeftEdge, Row::Top);
-    let cell = Cell::new_empty(position.clone());
-    let player = Player::new();
-    let same_position = cell.stack(&player).unwrap();
-    assert_eq!(cell, same_position);
 }
