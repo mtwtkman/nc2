@@ -26,7 +26,7 @@ impl Phase {
     }
 }
 
-struct Action {
+pub struct Action {
     from: Position,
     direction: Direction,
 }
@@ -86,8 +86,13 @@ impl Game {
         (Player::new(), Player::new())
     }
 
-    fn accept(&self, action: Action) -> Result<Self> {
-        let (board, phase) = self.next_turn(action)?;
+    fn is_correnct_player(&self, action: &Action) -> bool {
+        self.board
+            .is_occupied_by(&action.from, &self.current_phase.player)
+    }
+
+    pub fn accept(&self, action: Action) -> Result<Self> {
+        let (board, phase) = self.refresh_board(action)?;
         Ok(Self {
             player_a: self.player_a.clone(),
             player_b: self.player_b.clone(),
@@ -105,10 +110,9 @@ impl Game {
         }
     }
 
-    fn next_turn(&self, action: Action) -> Result<(Board, Phase)> {
+    fn refresh_board(&self, action: Action) -> Result<(Board, Phase)> {
         let moving_range = self.board.moving_range_of(&action.from)?;
         let destination = moving_range.indicate(&action.direction)?;
-        let departure_cell = self.board.cell_of(&action.from)?;
         let migrated_board = self.board.migrate(&action.from, &destination.position)?;
         let phase = Phase {
             player: self.next_player(),
@@ -122,7 +126,7 @@ impl Game {
 mod phase_spec {
     use super::Phase;
     use crate::{
-        board::{CellMap, DestinationState, MovingRange},
+        board::CellMap,
         cell::Cell,
         player::Player,
         position::{Column, Position, Row},
@@ -157,8 +161,7 @@ mod phase_spec {
 
 #[cfg(test)]
 mod game_spec {
-    use super::{Action, Direction, Game};
-    use crate::cell::Cell;
+    use super::Game;
 
     #[test]
     fn initial_state() {
@@ -175,6 +178,5 @@ mod game_spec {
     #[test]
     fn flip_turn() {
         let game = Game::new();
-        let current_phase = game.current_phase;
     }
 }

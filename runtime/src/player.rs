@@ -12,7 +12,7 @@ impl PlayerId {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, PartialOrd, Ord)]
-pub(crate) struct Player {
+pub struct Player {
     id: PlayerId,
 }
 impl Player {

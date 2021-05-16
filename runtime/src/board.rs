@@ -80,6 +80,10 @@ impl Board {
         })
     }
 
+    pub(crate) fn is_occupied_by(&self, position: &Position, player: &Player) -> bool {
+        self.territory(player).contains_key(position)
+    }
+
     pub(crate) fn territory(&self, player: &Player) -> CellMap {
         self.cell_map
             .iter()

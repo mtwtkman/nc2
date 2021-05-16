@@ -1,7 +1,7 @@
 use crate::player::Player;
 
 #[derive(Debug, Eq, PartialEq)]
-pub(crate) enum Error {
+pub enum Error {
     ReachedTop,
     ReachedBottom,
     ReachedRightEdge,
@@ -10,11 +10,10 @@ pub(crate) enum Error {
     CellIsEmpty,
     CellIsFullfilled,
     AlreadyOccupied(Player),
-    InvalidDirection,
     IllegalDestination,
     InvalidPosition,
     CellNotFound,
     SamePositionCannotBeMigrated,
 }
 
-pub(crate) type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
