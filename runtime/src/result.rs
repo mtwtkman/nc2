@@ -12,6 +12,9 @@ pub(crate) enum Error {
     AlreadyOccupied(Player),
     InvalidDirection,
     IllegalDestination,
+    InvalidPosition,
+    CellNotFound,
+    SamePositionCannotBeMigrated,
 }
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;

@@ -5,10 +5,9 @@ mod position;
 mod result;
 
 use board::{Board, CellMap, Direction};
-use cell::{Cell, MigratedCellPair};
 use player::Player;
 use position::{Position, Row};
-use result::{Error, Result};
+use result::Result;
 
 struct Phase {
     player: Player,
@@ -35,6 +34,10 @@ struct Action {
 impl Action {
     fn new(from: Position, direction: Direction) -> Self {
         Self { from, direction }
+    }
+
+    fn destination(&self) -> Result<Position> {
+        self.direction.destination(&self.from)
     }
 }
 
@@ -103,25 +106,15 @@ impl Game {
     }
 
     fn next_turn(&self, action: Action) -> Result<(Board, Phase)> {
-        let moving_range = self
-            .board
-            .cell_map
-            .get(&action.from)
-            .ok_or(Error::InvalidDirection)?;
+        let moving_range = self.board.moving_range_of(&action.from)?;
         let destination = moving_range.indicate(&action.direction)?;
-        let departure_cell = self.board.cell_map.get(&action.from).unwrap().pivot;
-        let migration_pair = departure_cell.migrate(&destination)?;
-        let board = self.remap(&migration_pair);
+        let departure_cell = self.board.cell_of(&action.from)?;
+        let migrated_board = self.board.migrate(&action.from, &destination.position)?;
         let phase = Phase {
             player: self.next_player(),
-            cell_map: board.cell_map.clone(),
+            cell_map: migrated_board.cell_map.clone(),
         };
-        Ok((board, phase))
-    }
-
-    fn remap(&self, migration_pair: &MigratedCellPair) -> Board {
-        let mut cell_map = self.board.cell_map.clone();
-        unimplemented!()
+        Ok((migrated_board, phase))
     }
 }
 
@@ -142,20 +135,7 @@ mod phase_spec {
             let mut cell_map: CellMap = CellMap::new();
             let position = Position::new(Column::LeftEdge, goal_side.clone());
             let cell = Cell::new_occupied(player.clone());
-            cell_map.insert(
-                position.clone(),
-                MovingRange {
-                    pivot: cell.clone(),
-                    up: DestinationState::OutOfField,
-                    down: DestinationState::OutOfField,
-                    right: DestinationState::OutOfField,
-                    left: DestinationState::OutOfField,
-                    up_right: DestinationState::OutOfField,
-                    down_right: DestinationState::OutOfField,
-                    up_left: DestinationState::OutOfField,
-                    down_left: DestinationState::OutOfField,
-                },
-            );
+            cell_map.insert(position.clone(), cell.clone());
             let phase = Phase { player, cell_map };
             assert!(phase.won(goal_side));
         }
@@ -168,20 +148,7 @@ mod phase_spec {
             let mut cell_map = CellMap::new();
             let position = Position::new(Column::LeftEdge, Row::MiddleFirst);
             let cell = Cell::new_occupied(player.clone());
-            cell_map.insert(
-                position.clone(),
-                MovingRange {
-                    pivot: cell.clone(),
-                    up: DestinationState::OutOfField,
-                    down: DestinationState::OutOfField,
-                    right: DestinationState::OutOfField,
-                    left: DestinationState::OutOfField,
-                    up_right: DestinationState::OutOfField,
-                    down_right: DestinationState::OutOfField,
-                    up_left: DestinationState::OutOfField,
-                    down_left: DestinationState::OutOfField,
-                },
-            );
+            cell_map.insert(position.clone(), cell.clone());
             let phase = Phase { player, cell_map };
             assert!(!phase.won(goal_side));
         }

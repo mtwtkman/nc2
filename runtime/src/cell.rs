@@ -5,12 +5,6 @@ use crate::{
 
 pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) struct MigratedCellPair {
-    pub(crate) from: Cell,
-    pub(crate) to: Cell,
-}
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub(crate) struct Cell {
     pub(crate) pallet: [Option<Player>; PALLET_HEIGHT_LIMIT],
@@ -33,7 +27,7 @@ impl Cell {
         self.owner() == other.owner()
     }
 
-    fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.height() == 0
     }
 
@@ -77,22 +71,6 @@ impl Cell {
             players[self.height() - 1] = None;
             Ok(Self { pallet: players })
         }
-    }
-
-    pub(crate) fn migrate(&self, other: &Cell) -> Result<MigratedCellPair> {
-        if self.is_empty() {
-            return Err(Error::CellIsEmpty);
-        } else if other.is_fullfilled() {
-            return Err(Error::CellIsFullfilled);
-        }
-        let owner = self.owner();
-        let destination_owner = other.owner();
-        if owner == destination_owner {
-            return Err(Error::AlreadyOccupied(destination_owner.unwrap()));
-        }
-        let from = self.unstack()?;
-        let to = other.stack(&owner.unwrap())?;
-        Ok(MigratedCellPair { from, to })
     }
 }
 
@@ -180,48 +158,4 @@ fn is_reached_stacking_limit() {
         .stack(&player_a)
         .unwrap()
         .is_fullfilled())
-}
-
-#[cfg(test)]
-mod cell_migrate_spec {
-    use super::{Cell, MigratedCellPair, Player};
-    use crate::result::Error;
-    #[test]
-    fn migrate() {
-        let player = Player::new();
-        let cell = Cell::new_occupied(player.clone());
-        let other = Cell::new_empty();
-        let migrated = cell.migrate(&other);
-        let expected = MigratedCellPair {
-            from: cell.clone().unstack().unwrap(),
-            to: other.clone().stack(&player).unwrap(),
-        };
-        assert_eq!(migrated, Ok(expected));
-    }
-
-    #[test]
-    fn empty_cell_cannot_migrate() {
-        let cell = Cell::new_empty();
-        let other = Cell::new_empty();
-        assert_eq!(cell.migrate(&other), Err(Error::CellIsEmpty));
-    }
-    #[test]
-    fn fullfilled_cell_cannot_migrate() {
-        let player_1 = Player::new();
-        let player_2 = Player::new();
-        let cell = Cell::new_occupied(player_1.clone());
-        let fullfilled = cell.stack(&player_2).unwrap().stack(&player_1).unwrap();
-        assert_eq!(cell.migrate(&fullfilled), Err(Error::CellIsFullfilled));
-    }
-
-    #[test]
-    fn already_occupied_cell_cannot_migrate() {
-        let player_1 = Player::new();
-        let cell = Cell::new_occupied(player_1.clone());
-        let other = Cell::new_occupied(player_1.clone());
-        assert_eq!(
-            cell.migrate(&other),
-            Err(Error::AlreadyOccupied(player_1.clone()))
-        );
-    }
 }
