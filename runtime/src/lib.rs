@@ -161,6 +161,12 @@ mod phase_spec {
 #[cfg(test)]
 mod game_spec {
     use super::Game;
+    use crate::{
+        board::Direction,
+        cell::Cell,
+        position::{Column, Position, Row},
+        result::Error,
+    };
 
     #[test]
     fn initial_state() {
@@ -175,13 +181,7 @@ mod game_spec {
     }
 
     #[test]
-    fn refresh_board() {
-        use crate::{
-            board::Direction,
-            cell::Cell,
-            position::{Column, Position, Row},
-        };
-
+    fn moved() {
         let game = Game::new();
         let from_position = Position::new(Column::LeftEdge, Row::Top);
         let direction = Direction::Down;
@@ -192,6 +192,16 @@ mod game_spec {
         } else {
             panic!("fail");
         }
+    }
 
+    #[test]
+    fn error_by_out_of_world() {
+        let game = Game::new();
+        let from_position = Position::new(Column::LeftEdge, Row::Top);
+        let direction = Direction::Up;
+        assert_eq!(
+            game.refresh_board(&from_position, &direction),
+            Err(Error::IllegalDestination),
+        )
     }
 }
