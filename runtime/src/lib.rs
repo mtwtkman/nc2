@@ -92,7 +92,7 @@ impl Game {
     }
 
     pub fn accept(&self, action: Action) -> Result<Self> {
-        let board = self.refresh_board(action)?;
+        let board = self.refresh_board(&action.from, &action.direction)?;
         let phase = Phase {
             player: self.next_player(),
             cell_map: board.cell_map.clone(),
@@ -114,10 +114,10 @@ impl Game {
         }
     }
 
-    fn refresh_board(&self, action: Action) -> Result<Board> {
-        let moving_range = self.board.moving_range_of(&action.from)?;
-        let destination = moving_range.indicate(&action.direction)?;
-        self.board.migrate(&action.from, &destination.position)
+    fn refresh_board(&self, position: &Position, direction: &Direction) -> Result<Board> {
+        let moving_range = self.board.moving_range_of(&position)?;
+        let destination = moving_range.indicate(&direction)?;
+        self.board.migrate(&position, &destination.position)
     }
 }
 
@@ -176,6 +176,20 @@ mod game_spec {
 
     #[test]
     fn flip_turn() {
+        use crate::{
+            position::{Column, Row, Position},
+            board::Direction,
+            cell::Cell,
+        };
+
         let game = Game::new();
+        let from_position = Position::new(Column::LeftEdge, Row::Top);
+        let direction = Direction::Down;
+        let board = game.refresh_board(&from_position, &direction);
+        assert!(board.is_ok());
+        assert_eq!(
+            board.unwrap().cell_map.get(&from_position),
+            Some(&Cell::new_occupied(game.player_a.clone())),
+        );
     }
 }

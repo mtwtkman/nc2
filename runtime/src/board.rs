@@ -590,7 +590,6 @@ mod migrate_spec {
         assert!(migrated.is_ok());
         let migrated_territory = migrated.unwrap().territory(&player_a);
         let migrated_from_cell = migrated_territory.get(&from_position);
-        eprintln!("{:?}", &migrated_from_cell);
         assert!(migrated_from_cell.is_none());
         let migrated_to_cell = migrated_territory.get(&to_position).unwrap();
         assert_eq!(migrated_to_cell.owner(), Some(player_a));
