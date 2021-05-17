@@ -175,21 +175,23 @@ mod game_spec {
     }
 
     #[test]
-    fn flip_turn() {
+    fn refresh_board() {
         use crate::{
-            position::{Column, Row, Position},
             board::Direction,
             cell::Cell,
+            position::{Column, Position, Row},
         };
 
         let game = Game::new();
         let from_position = Position::new(Column::LeftEdge, Row::Top);
         let direction = Direction::Down;
-        let board = game.refresh_board(&from_position, &direction);
-        assert!(board.is_ok());
-        assert_eq!(
-            board.unwrap().cell_map.get(&from_position),
-            Some(&Cell::new_occupied(game.player_a.clone())),
-        );
+        if let Ok(board) = game.refresh_board(&from_position, &direction) {
+            assert!(board.cell_map.get(&from_position).unwrap().is_empty());
+            let to_position = from_position.below().unwrap();
+            assert_eq!(board.cell_map.get(&to_position), Some(&Cell::new_occupied(game.player_a.clone())));
+        } else {
+            panic!("fail");
+        }
+
     }
 }
