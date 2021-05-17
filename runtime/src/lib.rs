@@ -188,7 +188,10 @@ mod game_spec {
         if let Ok(board) = game.refresh_board(&from_position, &direction) {
             assert!(board.cell_map.get(&from_position).unwrap().is_empty());
             let to_position = from_position.below().unwrap();
-            assert_eq!(board.cell_map.get(&to_position), Some(&Cell::new_occupied(game.player_a.clone())));
+            assert_eq!(
+                board.cell_map.get(&to_position),
+                Some(&Cell::new_occupied(game.player_a.clone()))
+            );
         } else {
             panic!("fail");
         }
