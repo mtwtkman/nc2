@@ -92,7 +92,11 @@ impl Game {
     }
 
     pub fn accept(&self, action: Action) -> Result<Self> {
-        let (board, phase) = self.refresh_board(action)?;
+        let board = self.refresh_board(action)?;
+        let phase = Phase {
+            player: self.next_player(),
+            cell_map: board.cell_map.clone(),
+        };
         Ok(Self {
             player_a: self.player_a.clone(),
             player_b: self.player_b.clone(),
@@ -110,15 +114,10 @@ impl Game {
         }
     }
 
-    fn refresh_board(&self, action: Action) -> Result<(Board, Phase)> {
+    fn refresh_board(&self, action: Action) -> Result<Board> {
         let moving_range = self.board.moving_range_of(&action.from)?;
         let destination = moving_range.indicate(&action.direction)?;
-        let migrated_board = self.board.migrate(&action.from, &destination.position)?;
-        let phase = Phase {
-            player: self.next_player(),
-            cell_map: migrated_board.cell_map.clone(),
-        };
-        Ok((migrated_board, phase))
+        self.board.migrate(&action.from, &destination.position)
     }
 }
 
