@@ -284,7 +284,7 @@ impl MovingRange {
 
 #[cfg(test)]
 mod board_spec {
-    use super::{Board, Direction};
+    use super::Board;
     use crate::{
         cell::Cell,
         player::Player,

@@ -9,6 +9,7 @@ use player::Player;
 use position::{Position, Row};
 use result::Result;
 
+#[derive(Debug)]
 struct Phase {
     player: Player,
     cell_map: CellMap,
@@ -26,6 +27,7 @@ impl Phase {
     }
 }
 
+#[derive(Debug)]
 pub struct Action {
     from: Position,
     direction: Direction,
@@ -41,6 +43,7 @@ impl Action {
     }
 }
 
+#[derive(Debug)]
 pub struct Game {
     player_a: Player,
     player_b: Player,
@@ -91,7 +94,7 @@ impl Game {
             .is_occupied_by(&action.from, &self.current_phase.player)
     }
 
-    pub fn accept(&self, action: Action) -> Result<Self> {
+    pub fn accept(&self, action: &Action) -> Result<Self> {
         let board = self.refresh_board(&action.from, &action.direction)?;
         let phase = Phase {
             player: self.next_player(),
@@ -160,7 +163,7 @@ mod phase_spec {
 
 #[cfg(test)]
 mod game_spec {
-    use super::Game;
+    use super::{Action, Game};
     use crate::{
         board::Direction,
         cell::Cell,
@@ -181,7 +184,7 @@ mod game_spec {
     }
 
     #[test]
-    fn moved() {
+    fn refresh_board() {
         let game = Game::new();
         let from_position = Position::new(Column::LeftEdge, Row::Top);
         let direction = Direction::Down;
@@ -195,6 +198,56 @@ mod game_spec {
         } else {
             panic!("fail");
         }
+    }
+
+    // TODO: #[test]
+    fn flip_turn() {
+        let mut game = Game::new();
+        let turns = [
+            Action::new(Position::new(Column::LeftEdge, Row::Top), Direction::Down),
+            Action::new(Position::new(Column::LeftEdge, Row::Bottom), Direction::Up),
+            Action::new(
+                Position::new(Column::LeftEdge, Row::MiddleFirst),
+                Direction::Down,
+            ),
+            Action::new(
+                Position::new(Column::LeftEdge, Row::MiddleFourth),
+                Direction::Right,
+            ),
+            Action::new(
+                Position::new(Column::LeftEdge, Row::MiddleSecond),
+                Direction::Down,
+            ),
+            Action::new(
+                Position::new(Column::MiddleFirst, Row::MiddleFourth),
+                Direction::Right,
+            ),
+            Action::new(
+                Position::new(Column::LeftEdge, Row::MiddleThird),
+                Direction::Down,
+            ),
+            Action::new(
+                Position::new(Column::MiddleSecond, Row::MiddleFourth),
+                Direction::Right,
+            ),
+            Action::new(
+                Position::new(Column::LeftEdge, Row::MiddleFourth),
+                Direction::Down,
+            ),
+            Action::new(
+                Position::new(Column::MiddleThird, Row::MiddleFourth),
+                Direction::Right,
+            ),
+        ];
+        turns.iter().for_each(|action| {
+            let result = game.accept(action);
+            if result.is_err() {
+                eprintln!("Game={:?}, Action={:?}", &result, action);
+                panic!("fail");
+            }
+            game = result.unwrap();
+        });
+        assert!(game.is_over());
     }
 
     #[test]
