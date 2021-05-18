@@ -100,13 +100,18 @@ impl Game {
             player: self.next_player(),
             cell_map: board.cell_map.clone(),
         };
+        let winner = self.judge();
         Ok(Self {
             player_a: self.player_a.clone(),
             player_b: self.player_b.clone(),
             board,
             current_phase: phase,
-            winner: self.winner.clone(),
+            winner: winner,
         })
+    }
+
+    fn judge(&self) -> Option<Player> {
+        unimplemented!()
     }
 
     fn next_player(&self) -> Player {
