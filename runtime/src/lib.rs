@@ -25,10 +25,6 @@ impl Phase {
             })
             .is_some()
     }
-
-    fn won(&self, goal_side: &Row) -> bool {
-        self.is_reached_goal_side(goal_side)
-    }
 }
 
 #[derive(Debug)]
@@ -139,7 +135,7 @@ mod phase_spec {
     };
 
     #[test]
-    fn won() {
+    fn reached_goal_side() {
         let player = Player::new();
         for goal_side in [Row::Top, Row::Bottom].iter() {
             let mut cell_map: CellMap = CellMap::new();
@@ -152,7 +148,7 @@ mod phase_spec {
     }
 
     #[test]
-    fn not_won() {
+    fn not_reached_goal_side() {
         let player = Player::new();
         for goal_side in [Row::Top, Row::Bottom].iter() {
             let mut cell_map = CellMap::new();
