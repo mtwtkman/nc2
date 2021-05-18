@@ -16,7 +16,7 @@ struct Phase {
 }
 
 impl Phase {
-    fn won(&self, goal_side: &Row) -> bool {
+    fn is_reached_goal_side(&self, goal_side: &Row) -> bool {
         self.cell_map
             .keys()
             .find(|position| match goal_side {
@@ -24,6 +24,10 @@ impl Phase {
                 _ => position.is_bottom(),
             })
             .is_some()
+    }
+
+    fn won(&self, goal_side: &Row) -> bool {
+        self.is_reached_goal_side(goal_side)
     }
 }
 
@@ -143,7 +147,7 @@ mod phase_spec {
             let cell = Cell::new_occupied(player.clone());
             cell_map.insert(position.clone(), cell.clone());
             let phase = Phase { player, cell_map };
-            assert!(phase.won(goal_side));
+            assert!(phase.is_reached_goal_side(goal_side));
         }
     }
 
@@ -156,7 +160,7 @@ mod phase_spec {
             let cell = Cell::new_occupied(player.clone());
             cell_map.insert(position.clone(), cell.clone());
             let phase = Phase { player, cell_map };
-            assert!(!phase.won(goal_side));
+            assert!(!phase.is_reached_goal_side(goal_side));
         }
     }
 }
@@ -200,7 +204,7 @@ mod game_spec {
         }
     }
 
-    // TODO: #[test]
+    // #[test]
     fn flip_turn() {
         let mut game = Game::new();
         let turns = [
