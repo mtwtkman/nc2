@@ -84,6 +84,44 @@ impl Board {
         self.territory(player).contains_key(position)
     }
 
+    pub(crate) fn is_isolated(&self, position: &Position) -> bool {
+        // TODO: remove if branches.
+        if let Ok(cell) = self.cell_of(position) {
+            if let Some(owner) = cell.owner() {
+                if let Ok(moving_range) = MovingRange::new(position, &self.cell_map) {
+                    [
+                        moving_range.up,
+                        moving_range.down,
+                        moving_range.right,
+                        moving_range.left,
+                        moving_range.up_right,
+                        moving_range.down_right,
+                        moving_range.up_left,
+                        moving_range.down_left,
+                    ].iter()
+                    .filter(|dest| {
+                        if let Some(point) = dest.reveal() {
+                            if let Some(dest_owner) = point.cell.owner() {
+                                &owner != &dest_owner
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        }
+                    })
+                    .collect::<Vec<&DestinationState>>().len() == 0
+                } else {
+                    false
+                }
+            } else {
+                true
+            }
+        } else {
+            false
+        }
+    }
+
     pub(crate) fn territory(&self, player: &Player) -> CellMap {
         self.cell_map
             .iter()
@@ -370,6 +408,64 @@ mod board_spec {
             .map(|col| { Position::new(col.to_owned(), Row::Top) })
             .collect::<BTreeSet<Position>>(),
         );
+    }
+
+    #[cfg(test)]
+    mod is_isolated_spec {
+        use super::Board;
+
+        use crate::{
+            cell::Cell,
+            position::{Column, Row, Position},
+            player::Player,
+        };
+
+        fn cell_owned_board(pivot: &Position) -> Board {
+            let player_a = Player::new();
+            let player_b = Player::new();
+            let mut board = Board::new(&player_a, &player_b);
+            let cell = Cell::new_occupied(player_a.clone());
+            board.cell_map.insert(pivot.clone(), cell.clone());
+            board
+        }
+
+        #[test]
+        fn enclosed_by_empty_cells() {
+            let pivot = Position::new(Column::MiddleSecond, Row::MiddleSecond);
+            let board = cell_owned_board(&pivot);
+            assert!(board.is_isolated(&pivot));
+        }
+
+        #[test]
+        fn enclosed_by_oneself() {
+            let pivot = Position::new(Column::LeftEdge, Row::MiddleFirst);
+            let board = cell_owned_board(&pivot);
+            assert!(board.is_isolated(&pivot));
+        }
+
+        #[test]
+        fn there_is_opponent() {
+            let player_a = Player::new();
+            let player_b = Player::new();
+            let mut board = Board::new(&player_a, &player_b);
+            let pivot = Position::new(Column::LeftEdge, Row::Top);
+            assert_eq!(
+                board.cell_of(&pivot).unwrap().owner(),
+                Some(player_a.clone()),
+            );
+            let adjacent = Position::new(Column::LeftEdge, Row::MiddleFirst);
+            board.cell_map.insert(adjacent.clone(), Cell::new_occupied(player_b.clone()));
+            assert!(!board.is_isolated(&pivot));
+        }
+
+        #[test]
+        fn empty_cell() {
+            let player_a = Player::new();
+            let player_b = Player::new();
+            let board = Board::new(&player_a, &player_b);
+            let pivot = Position::new(Column::MiddleSecond, Row::MiddleSecond);
+            assert!(board.is_isolated(&pivot));
+        }
     }
 }
 
