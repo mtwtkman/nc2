@@ -100,11 +100,9 @@ impl Board {
                     ].iter()
                     .filter(|dest| {
                         if let Some(point) = dest.reveal() {
-                            if let Some(dest_owner) = point.cell.owner() {
-                                &owner != &dest_owner
-                            } else {
-                                false
-                            }
+                            let dest_owner = point.cell.owner();
+                            if dest_owner.is_none() { return false; }
+                            &owner != &dest_owner.unwrap()
                         } else {
                             false
                         }
