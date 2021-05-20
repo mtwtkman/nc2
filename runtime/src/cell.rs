@@ -24,7 +24,10 @@ impl Cell {
     }
 
     pub(crate) fn is_same_owner(&self, other: &Cell) -> bool {
-        self.owner() == other.owner()
+        match (self.owner(), other.owner()) {
+            (Some(me), Some(opponent)) => me == opponent,
+            _ => false
+        }
     }
 
     pub(crate) fn is_empty(&self) -> bool {
@@ -56,7 +59,7 @@ impl Cell {
             if owner == Some(player.clone()) {
                 Err(Error::AlreadyOccupied(player.clone()))
             } else {
-                let mut players = self.pallet.clone();
+                let mut players = self.pallet;
                 players[height] = Some(player.clone());
                 Ok(Self { pallet: players })
             }
@@ -67,95 +70,143 @@ impl Cell {
         if self.is_empty() {
             Err(Error::CellIsEmpty)
         } else {
-            let mut players = self.pallet.clone();
+            let mut players = self.pallet;
             players[self.height() - 1] = None;
             Ok(Self { pallet: players })
         }
     }
 }
 
-#[test]
-fn new_occupied() {
-    let player = Player::new();
-    let cell = Cell::new_occupied(player.clone());
-    assert_eq!(
-        cell,
-        Cell {
-            pallet: [Some(player.clone()), None, None]
-        },
-    );
-    assert_eq!(cell.owner(), Some(player.clone()));
-    assert_eq!(cell.height(), 1);
-    assert!(!cell.is_empty());
-}
+#[cfg(test)]
+mod cell_spec {
+    use super::{Cell, PALLET_HEIGHT_LIMIT};
+    use crate::{
+        player::Player,
+        result::Error,
+    };
 
-#[test]
-fn new_empty() {
-    let cell = Cell::new_empty();
-    assert_eq!(
-        cell,
-        Cell {
-            pallet: [None; PALLET_HEIGHT_LIMIT],
-        },
-    );
-    assert!(cell.is_empty());
-    assert_eq!(cell.owner(), None);
-}
+    #[test]
+    fn new_occupied() {
+        let player = Player::new();
+        let cell = Cell::new_occupied(player);
+        assert_eq!(
+            cell,
+            Cell {
+                pallet: [Some(player), None, None]
+            },
+        );
+        assert_eq!(cell.owner(), Some(player));
+        assert_eq!(cell.height(), 1);
+        assert!(!cell.is_empty());
+    }
 
-#[test]
-fn stack() {
-    let player_1 = Player::new();
-    let cell = Cell::new_empty();
-    let first_stacked = cell.stack(&player_1);
-    assert!(first_stacked.is_ok());
-    let cell_has_one_player = first_stacked.unwrap();
-    let over_stacking_cell = cell_has_one_player.clone();
-    assert_eq!(
-        over_stacking_cell.stack(&player_1),
-        Err(Error::AlreadyOccupied(player_1.clone())),
-    );
-    assert_eq!(cell_has_one_player.height(), 1);
-    assert_eq!(cell_has_one_player.owner(), Some(player_1.clone()));
-    let player_2 = Player::new();
-    let second_stacked = cell_has_one_player.stack(&player_2);
-    assert!(second_stacked.is_ok());
-    let cell_has_two_players = second_stacked.unwrap();
-    assert_eq!(
-        &cell_has_two_players.pallet,
-        &[Some(player_1.clone()), Some(player_2.clone()), None]
-    );
-    let stacking_error = cell_has_two_players
-        .stack(&Player::new())
-        .unwrap()
-        .stack(&Player::new());
-    assert_eq!(stacking_error, Err(Error::ReachedPalletHeightLimit));
-}
+    #[test]
+    fn new_empty() {
+        let cell = Cell::new_empty();
+        assert_eq!(
+            cell,
+            Cell {
+                pallet: [None; PALLET_HEIGHT_LIMIT],
+            },
+        );
+        assert!(cell.is_empty());
+        assert_eq!(cell.owner(), None);
+    }
 
-#[test]
-fn unstack() {
-    let player_1 = Player::new();
-    let cell = Cell::new_occupied(player_1.clone());
-    let unstacked = cell.unstack();
-    assert_eq!(
-        unstacked,
-        Ok(Cell {
-            pallet: [None; PALLET_HEIGHT_LIMIT]
-        }),
-    );
-    let empty_cell = unstacked.unwrap();
-    let cannot_unstack = empty_cell.unstack();
-    assert_eq!(cannot_unstack, Err(Error::CellIsEmpty));
-}
+    #[test]
+    fn stack() {
+        let player_1 = Player::new();
+        let cell = Cell::new_empty();
+        let first_stacked = cell.stack(&player_1);
+        assert!(first_stacked.is_ok());
+        let cell_has_one_player = first_stacked.unwrap();
+        let over_stacking_cell = cell_has_one_player;
+        assert_eq!(
+            over_stacking_cell.stack(&player_1),
+            Err(Error::AlreadyOccupied(player_1)),
+        );
+        assert_eq!(cell_has_one_player.height(), 1);
+        assert_eq!(cell_has_one_player.owner(), Some(player_1));
+        let player_2 = Player::new();
+        let second_stacked = cell_has_one_player.stack(&player_2);
+        assert!(second_stacked.is_ok());
+        let cell_has_two_players = second_stacked.unwrap();
+        assert_eq!(
+            &cell_has_two_players.pallet,
+            &[Some(player_1), Some(player_2), None]
+        );
+        let stacking_error = cell_has_two_players
+            .stack(&Player::new())
+            .unwrap()
+            .stack(&Player::new());
+        assert_eq!(stacking_error, Err(Error::ReachedPalletHeightLimit));
+    }
 
-#[test]
-fn is_reached_stacking_limit() {
-    let player_a = Player::new();
-    let player_b = Player::new();
-    let cell = Cell::new_occupied(player_a.clone());
-    assert!(cell
-        .stack(&player_b)
-        .unwrap()
-        .stack(&player_a)
-        .unwrap()
-        .is_fullfilled())
+    #[test]
+    fn unstack() {
+        let player_1 = Player::new();
+        let cell = Cell::new_occupied(player_1);
+        let unstacked = cell.unstack();
+        assert_eq!(
+            unstacked,
+            Ok(Cell {
+                pallet: [None; PALLET_HEIGHT_LIMIT]
+            }),
+        );
+        let empty_cell = unstacked.unwrap();
+        let cannot_unstack = empty_cell.unstack();
+        assert_eq!(cannot_unstack, Err(Error::CellIsEmpty));
+    }
+
+    #[test]
+    fn is_reached_stacking_limit() {
+        let player_a = Player::new();
+        let player_b = Player::new();
+        let cell = Cell::new_occupied(player_a);
+        assert!(cell
+            .stack(&player_b)
+            .unwrap()
+            .stack(&player_a)
+            .unwrap()
+            .is_fullfilled())
+    }
+
+
+    #[cfg(test)]
+    mod is_same_owner_spec {
+        use super::super::Cell;
+        use crate::player::Player;
+
+        #[test]
+        fn empty_against_empty() {
+            let empty_cell_1 = Cell::new_empty();
+            let empty_cell_2 = Cell::new_empty();
+            assert!(!empty_cell_1.is_same_owner(&empty_cell_2));
+        }
+
+        #[test]
+        fn different_owner() {
+            let player_a = Player::new();
+            let player_b = Player::new();
+            let cell_a = Cell::new_occupied(player_a);
+            let cell_b = Cell::new_occupied(player_b);
+            assert!(!cell_a.is_same_owner(&cell_b));
+        }
+
+        #[test]
+        fn same_owner() {
+            let player = Player::new();
+            let cell_1 = Cell::new_occupied(player);
+            let cell_2 = Cell::new_occupied(player);
+            assert!(cell_1.is_same_owner(&cell_2));
+        }
+
+        #[test]
+        fn owned_against_empty() {
+            let player = Player::new();
+            let owned_cell = Cell::new_occupied(player);
+            let empty_cell = Cell::new_empty();
+            assert!(!owned_cell.is_same_owner(&empty_cell));
+        }
+    }
 }

@@ -85,7 +85,6 @@ impl Board {
     }
 
     pub(crate) fn is_isolated(&self, position: &Position) -> bool {
-        // TODO: remove if branches.
         if let Ok(cell) = self.cell_of(position) {
             if let Some(owner) = cell.owner() {
                 if let Ok(moving_range) = MovingRange::new(position, &self.cell_map) {
