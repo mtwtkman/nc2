@@ -99,13 +99,11 @@ impl Board {
                         moving_range.down_left,
                     ].iter()
                     .filter(|dest| {
-                        if let Some(point) = dest.reveal() {
-                            let dest_owner = point.cell.owner();
-                            if dest_owner.is_none() { return false; }
-                            &owner != &dest_owner.unwrap()
-                        } else {
-                            false
-                        }
+                        let dest_point = dest.reveal();
+                        if dest_point.is_none() { return false; }
+                        let dest_owner = dest_point.unwrap().cell.owner();
+                        if dest_owner.is_none() { return false; }
+                        &owner != &dest_owner.unwrap()
                     })
                     .collect::<Vec<&DestinationState>>().len() == 0
                 } else {
