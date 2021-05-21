@@ -26,7 +26,7 @@ impl Cell {
     pub(crate) fn is_same_owner(&self, other: &Cell) -> bool {
         match (self.owner(), other.owner()) {
             (Some(me), Some(opponent)) => me == opponent,
-            _ => false
+            _ => false,
         }
     }
 
@@ -80,10 +80,7 @@ impl Cell {
 #[cfg(test)]
 mod cell_spec {
     use super::{Cell, PALLET_HEIGHT_LIMIT};
-    use crate::{
-        player::Player,
-        result::Error,
-    };
+    use crate::{player::Player, result::Error};
 
     #[test]
     fn new_occupied() {
@@ -170,7 +167,6 @@ mod cell_spec {
             .unwrap()
             .is_fullfilled())
     }
-
 
     #[cfg(test)]
     mod is_same_owner_spec {

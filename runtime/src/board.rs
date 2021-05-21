@@ -87,28 +87,36 @@ impl Board {
     pub(crate) fn is_isolated(&self, position: &Position) -> bool {
         if let Ok(cell) = self.cell_of(position) {
             if let Some(owner) = cell.owner() {
-                if let Ok(moving_range) = MovingRange::new(position, &self.cell_map) {
-                    [
-                        moving_range.up,
-                        moving_range.down,
-                        moving_range.right,
-                        moving_range.left,
-                        moving_range.up_right,
-                        moving_range.down_right,
-                        moving_range.up_left,
-                        moving_range.down_left,
-                    ].iter()
-                    .filter(|dest| {
-                        let dest_point = dest.reveal();
-                        if dest_point.is_none() { return false; }
-                        let dest_owner = dest_point.unwrap().cell.owner();
-                        if dest_owner.is_none() { return false; }
-                        &owner != &dest_owner.unwrap()
-                    })
-                    .collect::<Vec<&DestinationState>>().len() == 0
-                } else {
-                    false
+                let moving_range = MovingRange::new(position, &self.cell_map);
+                if moving_range.is_err() {
+                    return false;
                 }
+                let moving_range = moving_range.unwrap();
+                [
+                    moving_range.up,
+                    moving_range.down,
+                    moving_range.right,
+                    moving_range.left,
+                    moving_range.up_right,
+                    moving_range.down_right,
+                    moving_range.up_left,
+                    moving_range.down_left,
+                ]
+                .iter()
+                .filter(|dest| {
+                    let dest_point = dest.reveal();
+                    if dest_point.is_none() {
+                        return false;
+                    }
+                    let dest_owner = dest_point.unwrap().cell.owner();
+                    if dest_owner.is_none() {
+                        return false;
+                    }
+                    &owner != &dest_owner.unwrap()
+                })
+                .collect::<Vec<&DestinationState>>()
+                .len()
+                    == 0
             } else {
                 true
             }
@@ -411,8 +419,8 @@ mod board_spec {
 
         use crate::{
             cell::Cell,
-            position::{Column, Row, Position},
             player::Player,
+            position::{Column, Position, Row},
         };
 
         fn cell_owned_board(pivot: &Position) -> Board {
@@ -449,7 +457,9 @@ mod board_spec {
                 Some(player_a.clone()),
             );
             let adjacent = Position::new(Column::LeftEdge, Row::MiddleFirst);
-            board.cell_map.insert(adjacent.clone(), Cell::new_occupied(player_b.clone()));
+            board
+                .cell_map
+                .insert(adjacent.clone(), Cell::new_occupied(player_b.clone()));
             assert!(!board.is_isolated(&pivot));
         }
 
