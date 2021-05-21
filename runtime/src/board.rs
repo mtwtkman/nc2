@@ -85,44 +85,46 @@ impl Board {
     }
 
     pub(crate) fn is_isolated(&self, position: &Position) -> bool {
-        if let Ok(cell) = self.cell_of(position) {
-            if let Some(owner) = cell.owner() {
-                let moving_range = MovingRange::new(position, &self.cell_map);
-                if moving_range.is_err() {
-                    return false;
-                }
-                let moving_range = moving_range.unwrap();
-                [
-                    moving_range.up,
-                    moving_range.down,
-                    moving_range.right,
-                    moving_range.left,
-                    moving_range.up_right,
-                    moving_range.down_right,
-                    moving_range.up_left,
-                    moving_range.down_left,
-                ]
-                .iter()
-                .filter(|dest| {
-                    let dest_point = dest.reveal();
-                    if dest_point.is_none() {
-                        return false;
-                    }
-                    let dest_owner = dest_point.unwrap().cell.owner();
-                    if dest_owner.is_none() {
-                        return false;
-                    }
-                    &owner != &dest_owner.unwrap()
-                })
-                .collect::<Vec<&DestinationState>>()
-                .len()
-                    == 0
-            } else {
-                true
-            }
-        } else {
-            false
+        let cell = self.cell_of(position);
+        if cell.is_err() {
+            return false;
         }
+        let cell = cell.unwrap();
+        let owner = cell.owner();
+        if owner.is_none() {
+            return true;
+        }
+        let owner = owner.unwrap();
+        let moving_range = MovingRange::new(position, &self.cell_map);
+        if moving_range.is_err() {
+            return false;
+        }
+        let moving_range = moving_range.unwrap();
+        [
+            moving_range.up,
+            moving_range.down,
+            moving_range.right,
+            moving_range.left,
+            moving_range.up_right,
+            moving_range.down_right,
+            moving_range.up_left,
+            moving_range.down_left,
+        ]
+        .iter()
+        .filter(|dest| {
+            let dest_point = dest.reveal();
+            if dest_point.is_none() {
+                return false;
+            }
+            let dest_owner = dest_point.unwrap().cell.owner();
+            if dest_owner.is_none() {
+                return false;
+            }
+            &owner != &dest_owner.unwrap()
+        })
+        .collect::<Vec<&DestinationState>>()
+        .len()
+            == 0
     }
 
     pub(crate) fn territory(&self, player: &Player) -> CellMap {
