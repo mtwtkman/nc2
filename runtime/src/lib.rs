@@ -96,22 +96,25 @@ impl Game {
 
     pub fn accept(&self, action: &Action) -> Result<Self> {
         let board = self.refresh_board(&action.from, &action.direction)?;
-        let phase = Phase {
+        let destination = action.destination()?;
+        let is_isolated = board.is_isolated(&destination);
+        let is_reached_goal_side = self.current_phase.is_reached_goal_side(&self.goal_side());
+        let winner = if is_reached_goal_side && is_isolated {
+            Some(self.current_phase.player)
+        } else {
+            None
+        };
+        let next_phase = Phase {
             player: self.next_player(),
             cell_map: board.cell_map.clone(),
         };
-        let winner = self.judge();
         Ok(Self {
             player_a: self.player_a.clone(),
             player_b: self.player_b.clone(),
             board,
-            current_phase: phase,
+            current_phase: next_phase,
             winner: winner,
         })
-    }
-
-    fn judge(&self) -> Option<Player> {
-        unimplemented!()
     }
 
     fn next_player(&self) -> Player {
