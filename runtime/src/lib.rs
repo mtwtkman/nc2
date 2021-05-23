@@ -90,7 +90,6 @@ impl Game {
         let destination = action.destination()?;
         let is_isolated = board.is_isolated(&destination);
         let is_reached_goal_side = board.is_reached_edge(&self.current_phase.player, &self.goal_side());
-        eprintln!("iso: {:?}, goal: {:?}", is_isolated, is_reached_goal_side);
         let winner = if is_reached_goal_side && is_isolated {
             Some(self.current_phase.player)
         } else {
@@ -205,7 +204,6 @@ mod game_spec {
             Action::new(Position::new(Column::MiddleFirst, Row::Top), Direction::Down),
         ];
         turns.iter().for_each(|action| {
-            eprint!("player: {:?}, action: {:?}, ", &game.current_phase.player, action);
             let result = game.accept(action);
             if result.is_err() {
                 eprintln!("Game={:?}, Action={:?}", &result, action);
