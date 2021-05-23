@@ -1,6 +1,5 @@
 use crate::result::{Error, Result};
 
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy)]
 pub(crate) enum Row {
     Top,

@@ -128,7 +128,9 @@ impl Board {
     }
 
     pub(crate) fn is_reached_edge(&self, player: &Player, row: &Row) -> bool {
-        if row.is_middle() { return false; }
+        if row.is_middle() {
+            return false;
+        }
         self.territory(player)
             .keys()
             .find(|position| match row {
