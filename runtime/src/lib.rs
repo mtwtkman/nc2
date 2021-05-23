@@ -7,24 +7,12 @@ mod result;
 use board::{Board, CellMap, Direction};
 use player::Player;
 use position::{Position, Row};
-use result::Result;
+use result::{Error, Result};
 
 #[derive(Debug)]
 struct Phase {
     player: Player,
     cell_map: CellMap,
-}
-
-impl Phase {
-    fn is_reached_goal_side(&self, goal_side: &Row) -> bool {
-        self.cell_map
-            .keys()
-            .find(|position| match goal_side {
-                Row::Top => position.is_top(),
-                _ => position.is_bottom(),
-            })
-            .is_some()
-    }
 }
 
 #[derive(Debug)]
@@ -95,18 +83,23 @@ impl Game {
     }
 
     pub fn accept(&self, action: &Action) -> Result<Self> {
+        if self.is_over() {
+            return Err(Error::GameIsOver);
+        }
         let board = self.refresh_board(&action.from, &action.direction)?;
         let destination = action.destination()?;
         let is_isolated = board.is_isolated(&destination);
-        let is_reached_goal_side = self.current_phase.is_reached_goal_side(&self.goal_side());
+        let is_reached_goal_side = self.board.is_reached_edge(&self.current_phase.player, &self.goal_side());
+        eprintln!("iso: {:?}, goal: {:?}", is_isolated, is_reached_goal_side);
         let winner = if is_reached_goal_side && is_isolated {
             Some(self.current_phase.player)
         } else {
             None
         };
+        let next_player = self.next_player();
         let next_phase = Phase {
-            player: self.next_player(),
-            cell_map: board.cell_map.clone(),
+            player: next_player,
+            cell_map: board.territory(&next_player),
         };
         Ok(Self {
             player_a: self.player_a.clone(),
@@ -129,43 +122,6 @@ impl Game {
         let moving_range = self.board.moving_range_of(&position)?;
         let destination = moving_range.indicate(&direction)?;
         self.board.migrate(&position, &destination.position)
-    }
-}
-
-#[cfg(test)]
-mod phase_spec {
-    use super::Phase;
-    use crate::{
-        board::CellMap,
-        cell::Cell,
-        player::Player,
-        position::{Column, Position, Row},
-    };
-
-    #[test]
-    fn reached_goal_side() {
-        let player = Player::new();
-        for goal_side in [Row::Top, Row::Bottom].iter() {
-            let mut cell_map: CellMap = CellMap::new();
-            let position = Position::new(Column::LeftEdge, goal_side.clone());
-            let cell = Cell::new_occupied(player.clone());
-            cell_map.insert(position.clone(), cell.clone());
-            let phase = Phase { player, cell_map };
-            assert!(phase.is_reached_goal_side(goal_side));
-        }
-    }
-
-    #[test]
-    fn not_reached_goal_side() {
-        let player = Player::new();
-        for goal_side in [Row::Top, Row::Bottom].iter() {
-            let mut cell_map = CellMap::new();
-            let position = Position::new(Column::LeftEdge, Row::MiddleFirst);
-            let cell = Cell::new_occupied(player.clone());
-            cell_map.insert(position.clone(), cell.clone());
-            let phase = Phase { player, cell_map };
-            assert!(!phase.is_reached_goal_side(goal_side));
-        }
     }
 }
 
@@ -208,7 +164,7 @@ mod game_spec {
         }
     }
 
-    // #[test]
+    //#[test]
     fn flip_turn() {
         let mut game = Game::new();
         let turns = [
@@ -235,16 +191,16 @@ mod game_spec {
                 Direction::Down,
             ),
             Action::new(
-                Position::new(Column::MiddleSecond, Row::MiddleFourth),
-                Direction::Right,
+                Position::new(Column::MiddleFirst, Row::Bottom),
+                Direction::Up,
             ),
             Action::new(
                 Position::new(Column::LeftEdge, Row::MiddleFourth),
                 Direction::Down,
             ),
             Action::new(
-                Position::new(Column::MiddleThird, Row::MiddleFourth),
-                Direction::Right,
+                Position::new(Column::MiddleFirst, Row::MiddleFourth),
+                Direction::Up,
             ),
         ];
         turns.iter().for_each(|action| {
@@ -255,7 +211,7 @@ mod game_spec {
             }
             game = result.unwrap();
         });
-        assert!(game.is_over());
+        assert_eq!(game.winner, Some(game.player_a));
     }
 
     #[test]

@@ -127,6 +127,17 @@ impl Board {
             == 0
     }
 
+    pub(crate) fn is_reached_edge(&self, player: &Player, row: &Row) -> bool {
+        if row.is_middle() { return false; }
+        self.territory(player)
+            .keys()
+            .find(|position| match row {
+                Row::Top => position.is_top(),
+                _ => position.is_bottom(),
+            })
+            .is_some()
+    }
+
     pub(crate) fn territory(&self, player: &Player) -> CellMap {
         self.cell_map
             .iter()
@@ -333,6 +344,30 @@ mod board_spec {
         player::Player,
         position::{Column, Position, Row},
     };
+
+    #[test]
+    fn reached_goal_side() {
+        let player_a = Player::new();
+        let player_b = Player::new();
+        let mut board = Board::new(&player_a, &player_b);
+        for (player, goal_side) in [(player_b, Row::Top), (player_a, Row::Bottom)].iter() {
+            let position = Position::new(Column::LeftEdge, goal_side.clone());
+            let edge_cell = board.cell_map.get(&position).unwrap();
+            let reached_edge_cell = edge_cell.stack(player).unwrap();
+            board.cell_map.insert(position, reached_edge_cell);
+            assert!(board.is_reached_edge(player, goal_side));
+        }
+    }
+
+    #[test]
+    fn not_reached_goal_side() {
+        let player_a = Player::new();
+        let player_b = Player::new();
+        let board = Board::new(&player_a, &player_b);
+        for (player, goal_side) in [(player_b, Row::Top), (player_a, Row::Bottom)].iter() {
+            assert!(!board.is_reached_edge(player, goal_side));
+        }
+    }
 
     #[test]
     fn generate_initial_occupied_cells() {

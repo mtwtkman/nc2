@@ -1,6 +1,5 @@
-use std::cmp::Ordering;
-
 use crate::result::{Error, Result};
+
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy)]
 pub(crate) enum Row {
@@ -21,7 +20,7 @@ impl Row {
         self == &Self::Bottom
     }
 
-    fn is_middle(&self) -> bool {
+    pub(crate) fn is_middle(&self) -> bool {
         match self {
             Self::Top | Self::Bottom => false,
             _ => true,

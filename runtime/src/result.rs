@@ -14,6 +14,7 @@ pub enum Error {
     InvalidPosition,
     CellNotFound,
     SamePositionCannotBeMigrated,
+    GameIsOver,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
