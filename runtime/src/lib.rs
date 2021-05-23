@@ -9,7 +9,7 @@ use player::Player;
 use position::{Position, Row};
 use result::{Error, Result};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct Phase {
     player: Player,
     cell_map: CellMap,
@@ -31,7 +31,7 @@ impl Action {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Game {
     player_a: Player,
     player_b: Player,
@@ -214,6 +214,13 @@ mod game_spec {
         });
         assert_eq!(game.winner, Some(game.player_a));
         assert!(game.is_over());
+        assert_eq!(
+            game.accept(&Action::new(
+                Position::new(Column::MiddleFirst, Row::MiddleThird),
+                Direction::Up,
+            )),
+            Err(Error::GameIsOver),
+        );
     }
 
     #[test]
@@ -224,6 +231,6 @@ mod game_spec {
         assert_eq!(
             game.refresh_board(&from_position, &direction),
             Err(Error::IllegalDestination),
-        )
+        );
     }
 }
