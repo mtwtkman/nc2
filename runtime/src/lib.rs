@@ -89,7 +89,7 @@ impl Game {
         let board = self.refresh_board(&action.from, &action.direction)?;
         let destination = action.destination()?;
         let is_isolated = board.is_isolated(&destination);
-        let is_reached_goal_side = self.board.is_reached_edge(&self.current_phase.player, &self.goal_side());
+        let is_reached_goal_side = board.is_reached_edge(&self.current_phase.player, &self.goal_side());
         eprintln!("iso: {:?}, goal: {:?}", is_isolated, is_reached_goal_side);
         let winner = if is_reached_goal_side && is_isolated {
             Some(self.current_phase.player)
@@ -164,7 +164,7 @@ mod game_spec {
         }
     }
 
-    //#[test]
+    #[test]
     fn flip_turn() {
         let mut game = Game::new();
         let turns = [
@@ -202,8 +202,10 @@ mod game_spec {
                 Position::new(Column::MiddleFirst, Row::MiddleFourth),
                 Direction::Up,
             ),
+            Action::new(Position::new(Column::MiddleFirst, Row::Top), Direction::Down),
         ];
         turns.iter().for_each(|action| {
+            eprint!("player: {:?}, action: {:?}, ", &game.current_phase.player, action);
             let result = game.accept(action);
             if result.is_err() {
                 eprintln!("Game={:?}, Action={:?}", &result, action);
