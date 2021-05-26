@@ -1,0 +1,18 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "parcel --host 0.0.0.0 -p 55301 --hmr-port 40891 index.html",
+    "build": "parcel index.html"
+  },
+  "keywords": [],
+  "author": "",
+  "dependencies": {
+    "index.js": "^0.0.3",
+    "nc2": "file:../pkg"
+  },
+  "devDependencies": {},
+  "license": "ISC"
+}

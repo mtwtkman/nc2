@@ -1,1 +1,7 @@
 target
+node_modules
+pkg
+yarn-error.log
+.cache
+dist
+.parcel-cache

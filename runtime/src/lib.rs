@@ -41,7 +41,7 @@ pub struct Game {
 }
 
 impl Game {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let (player_a, player_b) = Self::spawn_players();
         let board = Board::new(&player_a, &player_b);
         let phase = Phase {
