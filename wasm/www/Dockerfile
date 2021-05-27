@@ -16,4 +16,3 @@ USER app
 WORKDIR /home/app
 RUN mkdir nc2
 WORKDIR nc2
-RUN npm install -g parcel@next parcel-plugin-wasm-pack
