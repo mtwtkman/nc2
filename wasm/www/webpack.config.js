@@ -8,17 +8,12 @@ module.exports = {
     filename: "index.js"
   },
   mode: "development",
-  module: {
-    rules: [
-      {
-        test: /\.wasm$/,
-        use: "wasm-loader",
-      },
-    ],
-  },
   plugins: [
     new CopyWebpackPlugin({
       patterns: [{ from: "index.html", to: "index.html" }],
     }),
   ],
+  experiments: {
+    asyncWebAssembly: true,
+  },
 }
