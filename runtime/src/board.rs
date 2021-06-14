@@ -349,8 +349,8 @@ mod board_spec {
 
     #[test]
     fn reached_goal_side() {
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let mut board = Board::new(&player_a, &player_b);
         for (player, goal_side) in [(player_b, Row::Top), (player_a, Row::Bottom)].iter() {
             let position = Position::new(Column::LeftEdge, goal_side.clone());
@@ -363,8 +363,8 @@ mod board_spec {
 
     #[test]
     fn not_reached_goal_side() {
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let board = Board::new(&player_a, &player_b);
         for (player, goal_side) in [(player_b, Row::Top), (player_a, Row::Bottom)].iter() {
             assert!(!board.is_reached_edge(player, goal_side));
@@ -374,7 +374,7 @@ mod board_spec {
     #[test]
     fn generate_initial_occupied_cells() {
         for side in [Row::Top, Row::Bottom].iter() {
-            let player = Player::new();
+            let player = Player::new(0);
             let side_row = Board::generate_initial_occupied_cells(player.clone(), side.to_owned())
                 .collect::<Vec<(Position, Cell)>>();
             let expected_cells = [
@@ -429,8 +429,8 @@ mod board_spec {
     fn territory() {
         use std::collections::BTreeSet;
 
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let board = Board::new(&player_a, &player_b);
         let player_a_territory = board
             .territory(&player_a)
@@ -463,8 +463,8 @@ mod board_spec {
         };
 
         fn cell_owned_board(pivot: &Position) -> Board {
-            let player_a = Player::new();
-            let player_b = Player::new();
+            let player_a = Player::new(0);
+            let player_b = Player::new(1);
             let mut board = Board::new(&player_a, &player_b);
             let cell = Cell::new_occupied(player_a.clone());
             board.cell_map.insert(pivot.clone(), cell.clone());
@@ -487,8 +487,8 @@ mod board_spec {
 
         #[test]
         fn there_is_opponent() {
-            let player_a = Player::new();
-            let player_b = Player::new();
+            let player_a = Player::new(0);
+            let player_b = Player::new(1);
             let mut board = Board::new(&player_a, &player_b);
             let pivot = Position::new(Column::LeftEdge, Row::Top);
             assert_eq!(
@@ -504,8 +504,8 @@ mod board_spec {
 
         #[test]
         fn empty_cell() {
-            let player_a = Player::new();
-            let player_b = Player::new();
+            let player_a = Player::new(0);
+            let player_b = Player::new(1);
             let board = Board::new(&player_a, &player_b);
             let pivot = Position::new(Column::MiddleSecond, Row::MiddleSecond);
             assert!(board.is_isolated(&pivot));
@@ -526,8 +526,8 @@ mod moving_range_spec {
 
     #[test]
     fn new() {
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let pivot_position = Position::new(Column::LeftEdge, Row::MiddleSecond);
         let pivot_cell = Cell::new_occupied(player_a.clone());
         let opponents_position = pivot_position.above().unwrap();
@@ -673,7 +673,7 @@ mod moving_range_spec {
     fn moveable_directions() {
         use std::iter::FromIterator;
 
-        let player = Player::new();
+        let player = Player::new(0);
         let pivot_position = Position::new(Column::MiddleFirst, Row::MiddleFirst);
         let pivot_cell = Cell::new_occupied(player.clone());
         let mut cell_map = [
@@ -721,8 +721,8 @@ mod migrate_spec {
 
     #[test]
     fn migrate() {
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let board = Board::new(&player_a, &player_b);
         let from_position = Position::new(Column::LeftEdge, Row::Top);
         let to_position = from_position.below().unwrap();
@@ -737,8 +737,8 @@ mod migrate_spec {
 
     #[test]
     fn empty_cell_cannot_migrate() {
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let board = Board::new(&player_a, &player_b);
         let migrated = board.migrate(
             &Position::new(Column::MiddleFirst, Row::MiddleFirst),
@@ -748,8 +748,8 @@ mod migrate_spec {
     }
     #[test]
     fn fullfilled_cell_cannot_migrate() {
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let mut board = Board::new(&player_a, &player_b);
         let from_position = Position::new(Column::LeftEdge, Row::Top);
         let to_position = from_position.below().unwrap();
@@ -774,8 +774,8 @@ mod migrate_spec {
 
     #[test]
     fn already_occupied_cell_cannot_migrate() {
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let mut board = Board::new(&player_a, &player_b);
         let from_position = Position::new(Column::MiddleFirst, Row::Top);
         let to_position = from_position.lefthand().unwrap();

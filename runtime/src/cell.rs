@@ -84,7 +84,7 @@ mod cell_spec {
 
     #[test]
     fn new_occupied() {
-        let player = Player::new();
+        let player = Player::new(0);
         let cell = Cell::new_occupied(player);
         assert_eq!(
             cell,
@@ -112,7 +112,7 @@ mod cell_spec {
 
     #[test]
     fn stack() {
-        let player_1 = Player::new();
+        let player_1 = Player::new(0);
         let cell = Cell::new_empty();
         let first_stacked = cell.stack(&player_1);
         assert!(first_stacked.is_ok());
@@ -124,7 +124,7 @@ mod cell_spec {
         );
         assert_eq!(cell_has_one_player.height(), 1);
         assert_eq!(cell_has_one_player.owner(), Some(player_1));
-        let player_2 = Player::new();
+        let player_2 = Player::new(1);
         let second_stacked = cell_has_one_player.stack(&player_2);
         assert!(second_stacked.is_ok());
         let cell_has_two_players = second_stacked.unwrap();
@@ -133,15 +133,15 @@ mod cell_spec {
             &[Some(player_1), Some(player_2), None]
         );
         let stacking_error = cell_has_two_players
-            .stack(&Player::new())
+            .stack(&Player::new(2))
             .unwrap()
-            .stack(&Player::new());
+            .stack(&Player::new(3));
         assert_eq!(stacking_error, Err(Error::ReachedPalletHeightLimit));
     }
 
     #[test]
     fn unstack() {
-        let player_1 = Player::new();
+        let player_1 = Player::new(0);
         let cell = Cell::new_occupied(player_1);
         let unstacked = cell.unstack();
         assert_eq!(
@@ -157,8 +157,8 @@ mod cell_spec {
 
     #[test]
     fn is_reached_stacking_limit() {
-        let player_a = Player::new();
-        let player_b = Player::new();
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
         let cell = Cell::new_occupied(player_a);
         assert!(cell
             .stack(&player_b)
@@ -182,8 +182,8 @@ mod cell_spec {
 
         #[test]
         fn different_owner() {
-            let player_a = Player::new();
-            let player_b = Player::new();
+            let player_a = Player::new(0);
+            let player_b = Player::new(1);
             let cell_a = Cell::new_occupied(player_a);
             let cell_b = Cell::new_occupied(player_b);
             assert!(!cell_a.is_same_owner(&cell_b));
@@ -191,7 +191,7 @@ mod cell_spec {
 
         #[test]
         fn same_owner() {
-            let player = Player::new();
+            let player = Player::new(0);
             let cell_1 = Cell::new_occupied(player);
             let cell_2 = Cell::new_occupied(player);
             assert!(cell_1.is_same_owner(&cell_2));
@@ -199,7 +199,7 @@ mod cell_spec {
 
         #[test]
         fn owned_against_empty() {
-            let player = Player::new();
+            let player = Player::new(0);
             let owned_cell = Cell::new_occupied(player);
             let empty_cell = Cell::new_empty();
             assert!(!owned_cell.is_same_owner(&empty_cell));

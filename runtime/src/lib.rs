@@ -74,7 +74,7 @@ impl Game {
     }
 
     fn spawn_players() -> (Player, Player) {
-        (Player::new(), Player::new())
+        (Player::new(0), Player::new(1))
     }
 
     fn is_correnct_player(&self, action: &Action) -> bool {
