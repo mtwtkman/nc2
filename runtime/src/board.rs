@@ -241,7 +241,7 @@ pub(crate) struct MovingRange {
 }
 
 #[derive(Debug, Eq, PartialEq, PartialOrd, Ord)]
-pub(crate) enum Direction {
+pub enum Direction {
     Up,
     Down,
     Right,

@@ -1,7 +1,7 @@
 use crate::result::{Error, Result};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy)]
-pub(crate) enum Row {
+pub enum Row {
     Top,
     MiddleFirst,
     MiddleSecond,
@@ -50,7 +50,7 @@ impl Row {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy)]
-pub(crate) enum Column {
+pub enum Column {
     LeftEdge,
     MiddleFirst,
     MiddleSecond,
@@ -95,13 +95,13 @@ impl Column {
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, PartialOrd, Ord, Copy)]
-pub(crate) struct Position {
+pub struct Position {
     x: Column,
     y: Row,
 }
 
 impl Position {
-    pub(crate) fn new(x: Column, y: Row) -> Self {
+    pub fn new(x: Column, y: Row) -> Self {
         Self { x, y }
     }
 

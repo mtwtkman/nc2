@@ -12,5 +12,6 @@ extern "C" {
 #[wasm_bindgen]
 pub fn game() {
     let game = Game::new();
-    alert(&format!("hoge"));
+
+    alert(&format!("{:?}", &game));
 }

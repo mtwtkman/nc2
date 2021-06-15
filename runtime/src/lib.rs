@@ -22,7 +22,7 @@ pub struct Action {
 }
 
 impl Action {
-    fn new(from: Position, direction: Direction) -> Self {
+    pub fn new(from: Position, direction: Direction) -> Self {
         Self { from, direction }
     }
 
@@ -65,21 +65,16 @@ impl Game {
         }
     }
 
-    fn current_player(&self) -> Player {
+    pub fn current_player(&self) -> Player {
         self.current_phase.player.clone()
     }
 
-    fn is_over(&self) -> bool {
+    pub fn is_over(&self) -> bool {
         self.winner.is_some()
     }
 
     fn spawn_players() -> (Player, Player) {
         (Player::new(0), Player::new(1))
-    }
-
-    fn is_correnct_player(&self, action: &Action) -> bool {
-        self.board
-            .is_occupied_by(&action.from, &self.current_phase.player)
     }
 
     pub fn accept(&self, action: &Action) -> Result<Self> {
