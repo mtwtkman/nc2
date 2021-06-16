@@ -1,7 +1,7 @@
-mod board;
+pub mod board;
 mod cell;
-mod player;
-mod position;
+pub mod player;
+pub mod position;
 mod result;
 
 use board::{Board, CellMap, Direction};
