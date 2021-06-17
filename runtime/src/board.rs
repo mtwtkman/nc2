@@ -11,7 +11,7 @@ use crate::{
 pub(crate) type CellMap = HashMap<Position, Cell>;
 
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct Board {
+pub struct Board {
     pub(crate) cell_map: CellMap,
 }
 impl Board {

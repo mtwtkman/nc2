@@ -1,3 +1,4 @@
 import * as wasm from "nc2";
 
-wasm.game();
+let battle = wasm.Battle.new();
+console.log(battle);

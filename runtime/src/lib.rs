@@ -35,7 +35,7 @@ impl Action {
 pub struct Game {
     player_a: Player,
     player_b: Player,
-    board: Board,
+    pub board: Board,
     current_phase: Phase,
     winner: Option<Player>,
 }
