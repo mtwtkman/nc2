@@ -19,6 +19,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "engine"
+version = "0.1.0"
+
+[[package]]
 name = "js-sys"
 version = "0.3.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -35,9 +39,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.96"
+version = "0.2.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5600b4e6efc5421841a2138a6b082e07fe12f9aaa12783d50e5d13325b26b4fc"
+checksum = "12b8adadd720df158f4d70dfe7ccc6adb0472d7c55ca83445f6a5ab3e36f8fb6"
 
 [[package]]
 name = "log"
@@ -73,10 +77,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "runtime"
-version = "0.1.0"
-
-[[package]]
 name = "syn"
 version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -97,7 +97,7 @@ checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
 name = "wasm"
 version = "0.1.0"
 dependencies = [
- "runtime",
+ "engine",
  "wasm-bindgen",
  "web-sys",
  "wee_alloc",

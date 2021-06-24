@@ -9,7 +9,7 @@ use player::Player;
 use position::{Position, Row};
 use result::{Error, Result};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct Phase {
     player: Player,
     cell_map: CellMap,
@@ -31,7 +31,7 @@ impl Action {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Game {
     player_a: Player,
     player_b: Player,

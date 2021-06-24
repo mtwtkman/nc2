@@ -10,7 +10,9 @@ module.exports = {
   mode: "development",
   plugins: [
     new CopyWebpackPlugin({
-      patterns: [{ from: "index.html", to: "index.html" }],
+      patterns: [
+        { from: "index.html", to: "index.html" },
+      ],
     }),
   ],
   experiments: {

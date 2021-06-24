@@ -10,10 +10,11 @@ use crate::{
 
 pub(crate) type CellMap = HashMap<Position, Cell>;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Board {
     pub(crate) cell_map: CellMap,
 }
+
 impl Board {
     pub(crate) fn new(player_a: &Player, player_b: &Player) -> Self {
         let cell_map = Self::build_initial_cell_map(player_a, player_b);
