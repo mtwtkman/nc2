@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Hash, PartialOrd, Ord)]
 pub struct Player {
-    id: usize,  // FIXME: implement an unique value generator.
+    id: usize, // FIXME: implement an unique value generator.
 }
 
 impl Player {

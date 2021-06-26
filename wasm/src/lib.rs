@@ -1,10 +1,9 @@
-use wasm_bindgen::prelude::*;
 use engine::{
-    Game,
-    Action,
-    position::{Column, Position, Row},
     board::Direction,
+    position::{Column, Position, Row},
+    Action, Game,
 };
+use wasm_bindgen::prelude::*;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -23,7 +22,7 @@ impl Battle {
         Self { game, history }
     }
 
-    pub fn display_board(&self) -> String  {
+    pub fn display_board(&self) -> String {
         let board = self.game.board.clone();
         "hoge".to_string()
     }

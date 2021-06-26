@@ -47,6 +47,17 @@ impl Row {
             Self::Bottom => Err(Error::ReachedBottom),
         }
     }
+
+    pub fn iterator() -> impl Iterator<Item = Self> {
+        [
+            Self::Top,
+            Self::MiddleFirst,
+            Self::MiddleSecond,
+            Self::MiddleThird,
+            Self::MiddleFourth,
+            Self::Bottom,
+        ].iter().copied()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy)]
@@ -91,6 +102,18 @@ impl Column {
             Self::MiddleThird => Ok(Self::MiddleSecond),
             Self::RightEdge => Ok(Self::MiddleThird),
         }
+    }
+
+    pub fn iterator() -> impl Iterator<Item = Self> {
+        [
+            Self::LeftEdge,
+            Self::MiddleFirst,
+            Self::MiddleSecond,
+            Self::MiddleThird,
+            Self::RightEdge,
+        ]
+        .iter()
+        .copied()
     }
 }
 
@@ -578,4 +601,35 @@ fn position_order() {
         Position::new(Column::LeftEdge, Row::Top)
             < Position::new(Column::MiddleFirst, Row::MiddleFirst)
     );
+}
+
+#[test]
+fn column_iterator() {
+    let iter = Column::iterator();
+    let expected = [
+        Column::LeftEdge,
+        Column::MiddleFirst,
+        Column::MiddleSecond,
+        Column::MiddleThird,
+        Column::RightEdge,
+    ];
+    for (i, value) in iter.enumerate() {
+        assert_eq!(value, expected[i]);
+    }
+}
+
+#[test]
+fn row_iterator() {
+    let iter = Row::iterator();
+    let expected = [
+        Row::Top,
+        Row::MiddleFirst,
+        Row::MiddleSecond,
+        Row::MiddleThird,
+        Row::MiddleFourth,
+        Row::Bottom,
+    ];
+    for (i, value) in iter.enumerate() {
+        assert_eq!(value,expected[i]);
+    }
 }
