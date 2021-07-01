@@ -21,6 +21,12 @@ impl Board {
         Self { cell_map }
     }
 
+    pub fn iterate(&self) -> impl Iterator<Item = Position> {
+        Row::iterator().flat_map(|row| {
+            Column::iterator().map(move |col| Position::new(col.clone(), row.clone()))
+        })
+    }
+
     fn build_initial_cell_map(player_a: &Player, player_b: &Player) -> CellMap {
         let mut cell_map = CellMap::new();
         let player_a_side_cells = Self::generate_initial_occupied_cells(player_a.clone(), Row::Top);
@@ -511,6 +517,20 @@ mod board_spec {
             let pivot = Position::new(Column::MiddleSecond, Row::MiddleSecond);
             assert!(board.is_isolated(&pivot));
         }
+    }
+
+    #[test]
+    fn iterate() {
+        let player_a = Player::new(0);
+        let player_b = Player::new(1);
+        let board = Board::new(&player_a, &player_b);
+        let iterated = board.iterate();
+        let expected = Row::iterator().flat_map(|row| {
+            Column::iterator().map(move |col| Position::new(col, row))
+        });
+        iterated.zip(expected).for_each(|(a, e)| {
+            assert_eq!(a, e);
+        });
     }
 }
 
