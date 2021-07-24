@@ -8,11 +8,11 @@ use crate::{
     result::{Error, Result},
 };
 
-pub(crate) type CellMap = HashMap<Position, Cell>;
+pub type CellMap = HashMap<Position, Cell>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Board {
-    pub(crate) cell_map: CellMap,
+    pub cell_map: CellMap,
 }
 
 impl Board {

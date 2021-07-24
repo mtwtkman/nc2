@@ -6,7 +6,7 @@ use crate::{
 pub(crate) const PALLET_HEIGHT_LIMIT: usize = 3;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
-pub(crate) struct Cell {
+pub struct Cell {
     pub(crate) pallet: [Option<Player>; PALLET_HEIGHT_LIMIT],
 }
 
@@ -15,7 +15,7 @@ impl Cell {
         self.pallet.iter().filter(|x| x.is_some()).count()
     }
 
-    pub(crate) fn owner(&self) -> Option<Player> {
+    pub fn owner(&self) -> Option<Player> {
         if self.is_empty() {
             None
         } else {

@@ -24,6 +24,17 @@ impl Battle {
 
     pub fn display_board(&self) -> String {
         let board = self.game.board.clone();
-        "hoge".to_string()
+        board
+            .iterate()
+            .map(|pos| {
+                let cell = board.cell_map.get(&pos).unwrap();
+                if let Some(player) = cell.owner() {
+                    player.id.to_string()
+                } else {
+                    " ".to_string()
+                }
+            })
+            .collect::<Vec<String>>()
+            .join("|")
     }
 }
